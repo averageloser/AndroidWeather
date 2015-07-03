@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Weather</string>
+    <string name="city_search_title">City:</string>
+    <string name="state_search_title">State or Country:</string>
+    <string name="cancel_button_text">Cancel</string>
+    <string name="search_button_text">Search</string>
+    <string name="first_start">Please search for a location.</string>
+</resources>

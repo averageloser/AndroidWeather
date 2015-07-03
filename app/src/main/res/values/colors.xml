@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="blueone">#0A0A2A</color>
+    <color name="bluetwo">#0B0B3B</color>
+    <color name="yellow">#FFFF00</color>
+    <color name="bluethree">#070719</color>
+    <color name="bluefour">#1f1f5f</color>
+    <color name="yellow500">#FFEB3B</color>
+    <color name="amber700">#FFA000</color>
+    <color name="primaryColor">#2196f3</color>
+    <color name="primaryColorDark">#2f77e5</color>
+</resources>

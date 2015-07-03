@@ -1,0 +1,20 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">@color/yellow500</item>
+        <item name="colorPrimaryDark">@color/amber700</item>
+        <item name="android:navigationBarColor">@color/amber700</item>
+        <item name="actionMenuTextColor">@android:color/white</item>
+        <item name="android:actionMenuTextColor">@android:color/white</item>
+    </style>
+
+    <style name="toolbar">
+        <item name="android:title">@string/app_name</item>
+        <item name="android:textColorPrimary">@android:color/white</item>
+        <!--item name="android:popupMenuStyle">@style/toolbar</item-->
+        <item name="android:background">@color/yellow500</item>
+    </style>
+
+
+</resources>
