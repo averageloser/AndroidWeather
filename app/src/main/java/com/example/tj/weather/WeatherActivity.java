@@ -163,18 +163,8 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
                 citySearchDialog.show(manager, "CitySearchDialog");
                 break;
             case R.id.location_search:
-                if (locationSupported) {
-                    processingSearch = true;
-
-                    locationSearchTask.startLocationSearch();
-                } else {
-                    AlertDialog dialog = new AlertDialog.Builder(this)
-                            .setTitle("Location error")
-                            .setMessage("Location services are either still connecting, or are not " +
-                                    "configured properly.  If you see this message more than once, " +
-                                    "check your location settings.")
-                            .setPositiveButton("OK", null)
-                            .show();
+                if (!processingSearch) {
+                    locationSettingsVerifier.checkLocationServices();
                 }
         }
         return super.onOptionsItemSelected(item);
@@ -233,8 +223,6 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
 
     public void onResume() {
         super.onResume();
-
-        fireBoroadcast();
     }
 
     //////////////Callback for the location change listener.//////////////
@@ -291,10 +279,10 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
             locationSearchTask = new LocationSearchTask(WeatherActivity.this,
                     googleApiClient);
             locationSearchTask.addListener(WeatherActivity.this);
-
-            //now do a search fo the current location and update the ui.
-            locationSearchTask.startLocationSearch();
         }
+
+        //now do a search fo the current location and update the ui.
+        locationSearchTask.startLocationSearch();
     }
 
     @Override
@@ -306,13 +294,4 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
                 .setMessage("Problem connecting to location services.  Check your settings.")
                 .show();
     }
-
-    private void fireBoroadcast() {
-        LocalBroadcastManager mgr = LocalBroadcastManager.getInstance(this);
-
-        mgr.sendBroadcast(new Intent("android.intent.action.TIMEZONE_CHANGED"));
-
-        Log.i("broadcast", "fired");
-    }
-
 }
