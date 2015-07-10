@@ -269,6 +269,7 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     @Override
     public void onLocationSettingsVerified() {
         Log.i("Thread", Thread.currentThread().getName());
+
         //Location settings are adequate, so set the boolean.
         Toast.makeText(WeatherActivity.this, "LocationSettingsResult OK", Toast.LENGTH_LONG).show();
 
