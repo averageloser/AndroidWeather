@@ -6,6 +6,8 @@ import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
+import android.location.Address;
+import android.location.Geocoder;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -28,7 +30,11 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.wearable.MessageApi;
+import com.google.android.gms.wearable.MessageEvent;
+import com.google.android.gms.wearable.Wearable;
 
+import java.io.IOException;
 import java.util.List;
 
 import static com.example.tj.weather.ui.CitySearchDialogFragment.CityChangeListener;
@@ -42,8 +48,11 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,
         LocationSettingsVerifier.LocationSettingsVerifierListener {
 
+    //The Intent that started this Activity.
+    private Intent startingIntent;
+
     //The helper class for WeatherActivity.
-    WeatherActivityHelper weatherActivityHelper;
+    private WeatherActivityHelper weatherActivityHelper;
 
     //The city search DialogFragment
     private CitySearchDialogFragment citySearchDialog = new CitySearchDialogFragment();
@@ -53,7 +62,12 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
 
     /*Boolean to tell me if proper location services are enabled (wifi and network). Low power use.
       Toggled as servies are available.*/
-    private boolean locationSupported, processingSearch;
+    private boolean locationSupported;
+
+    private boolean processingSearch;
+
+    //tells me whether or not this activity was started by the user speaking a locaiton into their watch.
+    private boolean startedByWear;
 
     /*The LocationService handles location changes via google play services FusedLocationAPI.
        This is instantiated in the onconnected listener, as there is no point in creating it at
@@ -72,6 +86,13 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //Grab the Intent that started this activity.
+        startingIntent = getIntent();
+
+        if (startingIntent != null && startingIntent.hasExtra("message")) {
+            startedByWear = true;
+        }
 
         setContentView(R.layout.activity_main);
 
@@ -98,6 +119,7 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
                         .addConnectionCallbacks(this)
                         .addOnConnectionFailedListener(this)
                         .addApi(LocationServices.API)
+                        .addApi(Wearable.API)
                         .build();
             }
 
@@ -182,6 +204,8 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     @Override
     public void onWeatherDownloadError() {
         weatherActivityHelper.onWeatherDownloadError();
+
+        startedByWear = false;
     }
 
     ////////////////////////////Lifecycle methods/////////////////////////////////////
@@ -212,13 +236,14 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     //The user has requested that the city be changed.
     @Override
     public void onCityChanged(String city, String countryOrState) {
-        processingSearch = true;
 
-        weatherActivityHelper.showDialog();
+                processingSearch = true;
 
-        weatherDownloader.beginDownloading(city, countryOrState);
+                weatherActivityHelper.showDialog();
 
-        processingSearch = false;
+                weatherDownloader.beginDownloading(city, countryOrState);
+
+                processingSearch = false;
     }
 
     public void onResume() {
@@ -239,15 +264,19 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     /* Called when successfully connected to google play services.*/
     @Override
     public void onConnected(Bundle bundle) {
-        Toast.makeText(this, "GoogleApiClient onConnected()", Toast.LENGTH_LONG).show();
-
-        //Here is where I check to make sure tha wifi and network location is set.
+        //Here is where I check to make sure that location is set.
         if (locationSettingsVerifier == null) {
             locationSettingsVerifier = new LocationSettingsVerifier(googleApiClient);
             locationSettingsVerifier.addLocationSettingsVerifierListener(this);
         }
 
-        locationSettingsVerifier.checkLocationServices();
+        //If this activity was started by a user from thier watch, honor that search, else grab current location.
+        if (startedByWear) {
+            wearSearchRequest(startingIntent);
+        } else {
+            //perform the initial location forecast search.
+            locationSettingsVerifier.checkLocationServices();
+        }
     }
 
     @Override
@@ -294,5 +323,33 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
                 .setTitle("Location problem")
                 .setMessage("Problem connecting to location services.  Check your settings.")
                 .show();
+    }
+
+    ////////////////////////////////////////////////////
+
+    protected void wearSearchRequest(Intent intent) {
+        String location = intent.getStringExtra("message");
+
+        Geocoder geocoder = new Geocoder(this);
+
+        List<Address> addressList = null;
+
+        try {
+            addressList = geocoder.getFromLocationName(location, 1);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if (addressList != null) {
+            Address address = addressList.get(0);
+
+            Log.i("address city", address.getLocality().toLowerCase() + " " + address.getAdminArea().toLowerCase());
+
+            onCityChanged(address.getLocality().toLowerCase(), address.getAdminArea().toLowerCase());
+        } else {
+            locationSearchTask.startLocationSearch();
+        }
+
+        startedByWear = false;
     }
 }

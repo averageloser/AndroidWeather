@@ -9,6 +9,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Locale;
@@ -24,7 +25,7 @@ public class WeatherModel {
     private String unit = "imperial"; //Unit of measurement.  Imperial is the default. *******Make this an enum later*********
     private String cityName = "new york"; //Default city.
     private String countryOrState = "ny"; //Default state.
-    private WeatherModelHelper weatherModelUtil = new WeatherModelHelper(); /* Common utility methods the model
+    private WeatherModelHelper weatherModelHelper = new WeatherModelHelper(); /* Common utility methods the model
     uses so as to not clutter itself with code that could best be put somewhere else. */
 
     /* Used for presenting temp data in the UI. Not implemented.*/
@@ -48,8 +49,8 @@ public class WeatherModel {
     }
 
     //gets the weather model util helper class.
-    public WeatherModelHelper getWeatherModelUtil() {
-        return weatherModelUtil;
+    public WeatherModelHelper getWeatherModelHelper() {
+        return weatherModelHelper;
     }
 
     /**
@@ -68,10 +69,10 @@ public class WeatherModel {
 
         this.countryOrState = countryOrState;
 
-        String url = "http://api.openweathermap.org/data/2.5/weather?q=" + cityName + ","
-                + countryOrState + "&units=" + unit + "&type=accurate";
+        String url = "http://api.openweathermap.org/data/2.5/weather?q="+ URLEncoder.encode(city, "UTF-8")
+                +","+URLEncoder.encode(countryOrState, "UTF-8")+"&units="+ URLEncoder.encode(unit, "UTF-8");
 
-        return parseJSONDataCurrentForecast(weatherModelUtil.downloadJSONData(url));
+        return parseJSONDataCurrentForecast(weatherModelHelper.downloadJSONData(url));
     }
 
 
@@ -87,28 +88,33 @@ public class WeatherModel {
     public WeatherLocation getWeeklyForecastNoHourly(String city, String countryOrState) throws IOException,
             JSONException {
 
-        String url = "http://api.openweathermap.org/data/2.5/forecast/daily?q=" + city + "," + countryOrState
-                + "&mode=json" + "&units=" + unit + "&cnt=10";
+        String url = "http://api.openweathermap.org/data/2.5/forecast/daily?q="+URLEncoder.encode(city, "UTF-8")+
+                ","+URLEncoder.encode(countryOrState, "UTF-8")+"&mode=json"+"&units="+URLEncoder.encode(unit, "UTF-8")+"&cnt=7";
 
         cityName = city;
 
         this.countryOrState = countryOrState;
 
-        Log.i("city", cityName);
+        Log.i("city", city);
 
-        return parseJSONDataWeeklyForecastNoHourly(weatherModelUtil.downloadJSONData(url));
+        return parseJSONDataWeeklyForecastNoHourly(weatherModelHelper.downloadJSONData(url));
     }
 
+    /*
+    Currently not used.
+     */
     public WeatherLocation getWeeklyForecastHourly(String city, String countryOrState) throws IOException,
     JSONException {
-        String url = "http://api.openweathermap.org/data/2.5/forecast/weather?q="+cityName+"&units="+unit+"&cnt=10";
+        String url = "http://api.openweathermap.org/data/2.5/forecast/weather?q="+URLEncoder.encode(city, "UTF-8")
+                +","+URLEncoder.encode(countryOrState, "UTF-8")+"&units="+URLEncoder.encode(unit, "UTF-8")+"&cnt=10";
+
         cityName = city;
 
         this.countryOrState = countryOrState;
 
-        Log.i("city", cityName);
+        Log.i("city", city);
 
-        return parseJSONDataWeeklyForecastHourly(weatherModelUtil.downloadJSONData(url));
+        return parseJSONDataWeeklyForecastHourly(weatherModelHelper.downloadJSONData(url));
     }
 
 
@@ -139,7 +145,7 @@ public class WeatherModel {
         String cod = mainObject.getString("cod");
 
         if (!cod.equals("200")) {
-            location.addWeatherForecast(weatherModelUtil.weatherForecastError(data));
+            location.addWeatherForecast(weatherModelHelper.weatherForecastError(data));
         } else {//Valid data exists, so parse it.
             //Every result has a city name, but not all location objects do, so this happens first.
             String name = mainObject.optString("name");
@@ -159,16 +165,16 @@ public class WeatherModel {
 
                 long sunset = mainObject.optLong("sunset");
 
-                location.setSunrise(weatherModelUtil.getDateFromTimestamp(sunrise) + weatherModelUtil.getTimeFromTimestamp(sunrise));
+                location.setSunrise(weatherModelHelper.getDateFromTimestamp(sunrise) + weatherModelHelper.getTimeFromTimestamp(sunrise));
 
-                location.setSunset(weatherModelUtil.getDateFromTimestamp(sunset) + weatherModelUtil.getTimeFromTimestamp(sunset));
+                location.setSunset(weatherModelHelper.getDateFromTimestamp(sunset) + weatherModelHelper.getTimeFromTimestamp(sunset));
             }
 
             /******************The date and time of the forecast.*************/
             long unixTimestamp = mainObject.optLong("dt");
 
-            forecast.setDate(weatherModelUtil.getDateFromTimestamp(unixTimestamp));
-            forecast.setTime(weatherModelUtil.getTimeFromTimestamp(unixTimestamp));
+            forecast.setDate(weatherModelHelper.getDateFromTimestamp(unixTimestamp));
+            forecast.setTime(weatherModelHelper.getTimeFromTimestamp(unixTimestamp));
 
             /******************The weather array*******************/
             JSONArray weather = mainObject.optJSONArray("weather");
@@ -208,7 +214,7 @@ public class WeatherModel {
                 String windSpeed = decimalFormatter.format(wind.optDouble("speed"));
 
                 //Not used.  Might not use ever.
-                String windDirection = weatherModelUtil.getWindDirectionFromDegrees(wind.optInt("deg"));
+                String windDirection = weatherModelHelper.getWindDirectionFromDegrees(wind.optInt("deg"));
 
                 forecast.setWindSpeed(windSpeed);
                 forecast.setWindDirection(windDirection);
@@ -246,7 +252,7 @@ public class WeatherModel {
         String cod = mainObject.getString("cod");
 
         if (!cod.equals("200")) {
-            location.addWeatherForecast(weatherModelUtil.weatherForecastError(data));
+            location.addWeatherForecast(weatherModelHelper.weatherForecastError(data));
         } else {//Valid data exists, so parse it.
             //Set the Location details that we want, if available.
 
@@ -277,7 +283,7 @@ public class WeatherModel {
                 long unixTimestamp = listObject.optLong("dt");
 
                 // the timestamp is valid, convert it to a string and set it in the forecast.
-                forecast.setDate(weatherModelUtil.getDateFromTimestamp(unixTimestamp));
+                forecast.setDate(weatherModelHelper.getDateFromTimestamp(unixTimestamp));
 
                 //Now the temperature for the forecast.
                 JSONObject temperature = listObject.optJSONObject("temp");
@@ -318,7 +324,7 @@ public class WeatherModel {
                 /************the wind details.*************/
                 int windSpeed = (int) listObject.optDouble("speed");
 
-                String windDirection = weatherModelUtil.getWindDirectionFromDegrees(listObject.optInt("deg"));
+                String windDirection = weatherModelHelper.getWindDirectionFromDegrees(listObject.optInt("deg"));
 
                 forecast.setWindSpeed(String.valueOf(windSpeed));
                 forecast.setWindDirection(windDirection);
@@ -348,7 +354,7 @@ public class WeatherModel {
         String cod = mainObject.getString("cod");
 
         if (!cod.equals("200")) {
-            location.addWeatherForecast(weatherModelUtil.weatherForecastError(data));
+            location.addWeatherForecast(weatherModelHelper.weatherForecastError(data));
         } else {//Valid data exists, so parse it.
             //Set the Location details that we want, if available.
 
@@ -381,8 +387,8 @@ public class WeatherModel {
                     /********the time and date***************/
                     long unixTimestamp = listObject.getLong("dt");
 
-                    forecast.setDate(weatherModelUtil.getDateFromTimestamp(unixTimestamp));
-                    forecast.setTime(weatherModelUtil.getTimeFromTimestamp(unixTimestamp));
+                    forecast.setDate(weatherModelHelper.getDateFromTimestamp(unixTimestamp));
+                    forecast.setTime(weatherModelHelper.getTimeFromTimestamp(unixTimestamp));
 
                     /*****************the main object****************/
                     JSONObject main = listObject.optJSONObject("main");

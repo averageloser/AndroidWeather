@@ -1,5 +1,7 @@
 package com.example.tj.weather.util;
 
+import android.util.Log;
+
 import com.example.tj.weather.model.WeatherForecast;
 import com.example.tj.weather.model.WeatherLocation;
 
@@ -27,6 +29,8 @@ public final class WeatherModelHelper {
      */
     public String downloadJSONData(String url) throws IOException {
         HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+
+        Log.i("url", url);
 
         StringBuilder sb = null;
 
@@ -80,7 +84,6 @@ public final class WeatherModelHelper {
      * @return
      */
     public String getWindDirectionFromDegrees(int angle) {
-
         return "100";
     }
 

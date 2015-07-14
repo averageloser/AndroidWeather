@@ -59,8 +59,13 @@ public class WeatherDownloadTask extends Fragment {
             try {
                 weatherList.add(model.getCurrentForecast(city, countryOrState));
                 weatherList.add(model.getWeeklyForecastNoHourly(city, countryOrState));
+
+                /* currently not used.
                 weatherList.add(model.getWeeklyForecastHourly(city, countryOrState));
+                */
             } catch (IOException | JSONException e) {
+                Log.e("download error", e.getMessage());
+
                 for (WeatherDownloadListener listener : weatherDownloadListeners) {
                     listener.onWeatherDownloadError();
                 }

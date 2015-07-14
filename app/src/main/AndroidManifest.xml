@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:action="http://schemas.android.com/apk/res-auto"
-    package="com.example.tj.weather">
+<manifest xmlns:action="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.tj.weather" >
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -23,18 +23,28 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".receivers.TimeZoneReceiver">
+        <receiver android:name=".receivers.TimeZoneReceiver" >
             <intent-filter>
-            <action android:name="android.intent.action.TIMEZONE_CHANGED"/>
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
             </intent-filter>
         </receiver>
 
-        <!-- receiver android:name=".receivers.LocationSettingsReceiver">
+        <!--
+        receiver android:name=".receivers.LocationSettingsReceiver">
             <intent-filter>
                 <action android:name="android.location.MODE_CHANGED"/>
             </intent-filter>
-        </receiver -->
+        </receiver
+        -->
 
+        <service
+            android:name=".service.WearWeatherListenerService"
+            android:enabled="true"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.BIND_LISTENER" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>
