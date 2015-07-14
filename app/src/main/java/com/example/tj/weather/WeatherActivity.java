@@ -49,7 +49,7 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
         LocationSettingsVerifier.LocationSettingsVerifierListener {
 
     //The Intent that started this Activity.
-    private Intent startingIntent;
+    //private Intent startingIntent;
 
     //The helper class for WeatherActivity.
     private WeatherActivityHelper weatherActivityHelper;
@@ -65,9 +65,6 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     private boolean locationSupported;
 
     private boolean processingSearch;
-
-    //tells me whether or not this activity was started by the user speaking a locaiton into their watch.
-    private boolean startedByWear;
 
     /*The LocationService handles location changes via google play services FusedLocationAPI.
        This is instantiated in the onconnected listener, as there is no point in creating it at
@@ -86,13 +83,6 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        //Grab the Intent that started this activity.
-        startingIntent = getIntent();
-
-        if (startingIntent != null && startingIntent.hasExtra("message")) {
-            startedByWear = true;
-        }
 
         setContentView(R.layout.activity_main);
 
@@ -204,8 +194,6 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     @Override
     public void onWeatherDownloadError() {
         weatherActivityHelper.onWeatherDownloadError();
-
-        startedByWear = false;
     }
 
     ////////////////////////////Lifecycle methods/////////////////////////////////////
@@ -270,13 +258,8 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
             locationSettingsVerifier.addLocationSettingsVerifierListener(this);
         }
 
-        //If this activity was started by a user from thier watch, honor that search, else grab current location.
-        if (startedByWear) {
-            wearSearchRequest(startingIntent);
-        } else {
-            //perform the initial location forecast search.
-            locationSettingsVerifier.checkLocationServices();
-        }
+        //perform the initial location forecast search.
+        locationSettingsVerifier.checkLocationServices();
     }
 
     @Override
@@ -325,7 +308,10 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
                 .show();
     }
 
-    ////////////////////////////////////////////////////
+    @Override
+    protected void onNewIntent(Intent intent) {
+        wearSearchRequest(intent);
+    }
 
     protected void wearSearchRequest(Intent intent) {
         String location = intent.getStringExtra("message");
@@ -340,16 +326,16 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
             e.printStackTrace();
         }
 
-        if (addressList != null) {
+        if (addressList != null  && !addressList.isEmpty()) {
             Address address = addressList.get(0);
 
-            Log.i("address city", address.getLocality().toLowerCase() + " " + address.getAdminArea().toLowerCase());
+            if (address != null) {
+                Log.i("address city", address.getLocality().toLowerCase() + " " + address.getAdminArea().toLowerCase());
 
-            onCityChanged(address.getLocality().toLowerCase(), address.getAdminArea().toLowerCase());
+                onCityChanged(address.getLocality().toLowerCase(), address.getAdminArea().toLowerCase());
+            }
         } else {
             locationSearchTask.startLocationSearch();
         }
-
-        startedByWear = false;
     }
 }
