@@ -22,6 +22,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.widget.Toast;
+
 import com.example.tj.weather.model.WeatherLocation;
 import com.example.tj.weather.receivers.LocationSettingsReceiver;
 import com.example.tj.weather.ui.CitySearchDialogFragment;
@@ -225,13 +226,13 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     @Override
     public void onCityChanged(String city, String countryOrState) {
 
-                processingSearch = true;
+        processingSearch = true;
 
-                weatherActivityHelper.showDialog();
+        weatherActivityHelper.showDialog();
 
-                weatherDownloader.beginDownloading(city, countryOrState);
+        weatherDownloader.beginDownloading(city, countryOrState);
 
-                processingSearch = false;
+        processingSearch = false;
     }
 
     public void onResume() {
@@ -316,26 +317,26 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     protected void wearSearchRequest(Intent intent) {
         String location = intent.getStringExtra("message");
 
-        Geocoder geocoder = new Geocoder(this);
+        if (location != null) {
+            Geocoder geocoder = new Geocoder(this);
 
-        List<Address> addressList = null;
+            List<Address> addressList = null;
 
-        try {
-            addressList = geocoder.getFromLocationName(location, 1);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        if (addressList != null  && !addressList.isEmpty()) {
-            Address address = addressList.get(0);
-
-            if (address != null) {
-                Log.i("address city", address.getLocality().toLowerCase() + " " + address.getAdminArea().toLowerCase());
-
-                onCityChanged(address.getLocality().toLowerCase(), address.getAdminArea().toLowerCase());
+            try {
+                addressList = geocoder.getFromLocationName(location, 1);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } else {
-            locationSearchTask.startLocationSearch();
+
+            if (addressList != null) {
+                Address address = addressList.get(0);
+
+                if (address != null) {
+                    Log.i("address city", address.getLocality().toLowerCase() + " " + address.getAdminArea().toLowerCase());
+
+                    onCityChanged(address.getLocality().toLowerCase(), address.getAdminArea().toLowerCase());
+                }
+            }
         }
     }
 }
