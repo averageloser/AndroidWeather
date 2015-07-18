@@ -274,6 +274,7 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<List
             Notification extended = new NotificationCompat.Builder(activity)
                     .setContentTitle("Extended Forecast")
                     .setContentText(dateAndTemps)
+                    .setPriority(Notification.PRIORITY_HIGH)
                     .build();
 
             //add the page to the wearable extender.
@@ -379,7 +380,16 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<List
         /* I don't want duplicate locations in the database, and instead of using a Set, I can
         just do a quick check of the list to make sure that this location doesn't already exist.
          */
-        if (!dbLocations.contains(location)) {
+
+        boolean alreadyExists = false;
+
+        for (DBLocation l: dbLocations) {
+            if (l.getCity().equals(location.getCity()) && l.getStateOrCountry().equals(location.getStateOrCountry())) {
+                alreadyExists = true;
+            }
+        }
+
+        if (!alreadyExists) {
 
             if (dbModel.insert(location)) {
 

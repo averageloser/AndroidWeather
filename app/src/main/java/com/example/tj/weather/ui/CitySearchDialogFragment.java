@@ -46,7 +46,8 @@ public class CitySearchDialogFragment extends DialogFragment {
             @Override
             public void onClick(View v) {
                 if (!cityInput.getText().toString().isEmpty()) {
-                    ((CityChangeListener) getActivity()).onCityChanged(cityInput.getText().toString(), stateInput.getText().toString());
+                    ((CityChangeListener) getActivity()).onCityChanged(cityInput.getText().toString().toUpperCase(),
+                            stateInput.getText().toString().toUpperCase());
                     clearFields();
                     dismiss();
                 }
