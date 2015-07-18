@@ -13,10 +13,13 @@ import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Adapter;
+import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -41,7 +44,7 @@ import java.util.List;
  * This class will handle instantiation and modification of all ui components,
  * as well as weather download callbacks.
  */
-public class WeatherActivityHelper  implements LoaderManager.LoaderCallbacks<List<DBLocation>> {
+public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<List<DBLocation>> {
     public static final int DB_LOADER = 1;
 
     private WeatherActivity activity;
@@ -77,7 +80,7 @@ public class WeatherActivityHelper  implements LoaderManager.LoaderCallbacks<Lis
     private DBModel dbModel;
 
     //The list of DBLocations from the database.
-    private List dbLocations;
+    private List<DBLocation> dbLocations;
 
     //did I already do the initial force load for the loader?
     private boolean didForceLoad;
@@ -126,17 +129,18 @@ public class WeatherActivityHelper  implements LoaderManager.LoaderCallbacks<Lis
         //ListView for the database view.
         databaseListView = (ListView) databaseLayout.findViewById(R.id.database_listView);
 
+        //Assign the database list view a listener for clicks.
+        databaseListView.setOnItemClickListener(databaseListViewClickListener);
+
+        //register databast list view for context menu.
+        activity.registerForContextMenu(databaseListView);
+
         flipper.setAnimateFirstView(true);
         flipper.setInAnimation(activity, android.R.anim.fade_in);
         flipper.setOutAnimation(activity, android.R.anim.fade_out);
         flipper.addView(currentForecastLayout);
         flipper.addView(extendedForecastLayout);
         flipper.addView(databaseLayout);
-
-        //////////////////Test.  Add a couple of db entries.////////////
-        for (int i = 0; i < 5; i++) {
-            dbModel.insert(new DBLocation("Naples", "FL"));
-        }
 
         //initialize the loader.
         activity.getSupportLoaderManager().initLoader(DB_LOADER, null, this);
@@ -368,18 +372,58 @@ public class WeatherActivityHelper  implements LoaderManager.LoaderCallbacks<Lis
         //not used here.
     }
 
-
     //Adds a location to the database in response to a city search.
     public void InsertDBLocation(String city, String stateOrCountry) {
-        DBLocation dbLocation = new DBLocation(city, stateOrCountry);
+        DBLocation location = new DBLocation(city, stateOrCountry);
 
-        dbModel.insert(dbLocation);
+        /* I don't want duplicate locations in the database, and instead of using a Set, I can
+        just do a quick check of the list to make sure that this location doesn't already exist.
+         */
+        if (!dbLocations.contains(location)) {
 
-        databaseListViewAdapter.add(dbLocation);
+            if (dbModel.insert(location)) {
 
-        //tell the loader to reload the data.
-        databaseLoader.onContentChanged();
+                dbLocations.add(location);
+
+                //update the adapter.
+                databaseListViewAdapter.notifyDataSetChanged();
+            }
+        }
     }
+
+    public void deleteDBLocation(int position) {
+        DBLocation location = dbLocations.get(position);
+
+        if (dbModel.delete(location)) {
+            Log.i("delete", "location deleted");
+            //Delete if from the list
+            dbLocations.remove(location);
+
+            databaseListViewAdapter.remove(location);
+
+            //update the adapter.
+            databaseListViewAdapter.notifyDataSetChanged();
+        }
+
+
+    }
+
+    //////////////////////////////Listener for the listview for single touches.///////////////////////
+    AdapterView.OnItemClickListener databaseListViewClickListener = new AdapterView.OnItemClickListener() {
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            //Get the city and stateOrCountry from the item that was clicked.
+            DBLocation location = dbLocations.get(position);
+
+            String city = location.getCity();
+
+            String stateOrCountry = location.getStateOrCountry();
+
+            //call back to the activity to do the location search.
+            activity.onCityChanged(city, stateOrCountry);
+        }
+    };
 
     //Deletes all items in the database in response to user pressing the trash icon in the toolbar.
     public void deleteItems() {
@@ -389,5 +433,16 @@ public class WeatherActivityHelper  implements LoaderManager.LoaderCallbacks<Lis
 
         //Tell the loader that the date changed.
         databaseLoader.onContentChanged();
+    }
+
+    //////////////////////the context menu for the databast list view//////////////////////
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        menu.add(0, 1, 0, "Delete");
+    }
+
+    public void onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+
+        deleteDBLocation((info.position));
     }
 }

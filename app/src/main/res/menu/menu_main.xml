@@ -14,7 +14,7 @@
         app:showAsAction="always" />
     <item
         android:id="@+id/delete_locations"
-        android:title="Clear Locations"
+        android:title="Clear Saved Locations"
         app:showAsAction="never" />
 
 </menu>

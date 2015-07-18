@@ -1,9 +1,5 @@
 package com.example.tj.weather.util;
 
-import android.support.v7.app.AlertDialog;
-import android.widget.Toast;
-
-import com.example.tj.weather.WeatherActivity;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
@@ -25,12 +21,12 @@ import java.util.List;
  *
  * TODO: I have forgotten to check for mobile data access.   Do that.
  */
-public class LocationSettingsVerifier {
+public class NetworkLocationSettingsVerifier {
     public interface LocationSettingsVerifierListener {
-        void onLocationSettingsVerified();
+        void onNetworkLocationSettingsVerified();
 
         //Called when location settings do not meet application requirements.
-        void onLocationSettingsNotVerified();
+        void onNetworkLocationSettingsNotVerified();
     }
 
     private GoogleApiClient googleApiClient;
@@ -38,10 +34,10 @@ public class LocationSettingsVerifier {
     private List<LocationSettingsVerifierListener> listeners;
 
     /*The type of location request I want i.e. a low power search (network and wifi).  Used to check
-    location status and also used by LocationSearchTask. */
+    location status and also used by NetworkLocationSearchTask. */
     private LocationRequest locationLowPoweRequest;
 
-    public LocationSettingsVerifier(GoogleApiClient googleApiClient) {
+    public NetworkLocationSettingsVerifier(GoogleApiClient googleApiClient) {
         this.googleApiClient = googleApiClient;
 
         listeners = new ArrayList();
@@ -61,13 +57,13 @@ public class LocationSettingsVerifier {
 
     private void notifyListenersLocationServicesVerified() {
         for (LocationSettingsVerifierListener listener : listeners) {
-            listener.onLocationSettingsVerified();
+            listener.onNetworkLocationSettingsVerified();
         }
     }
 
     private void notifyListenersLocationServicesNotVerified() {
         for (LocationSettingsVerifierListener listener : listeners) {
-            listener.onLocationSettingsNotVerified();
+            listener.onNetworkLocationSettingsNotVerified();
         }
     }
 

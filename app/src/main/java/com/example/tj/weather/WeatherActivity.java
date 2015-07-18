@@ -1,7 +1,6 @@
 
 package com.example.tj.weather;
 
-import android.app.Notification;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
@@ -12,30 +11,27 @@ import android.location.Geocoder;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.View;
 import android.widget.Toast;
 
 import com.example.tj.weather.model.WeatherLocation;
 import com.example.tj.weather.receivers.LocationSettingsReceiver;
 import com.example.tj.weather.ui.CitySearchDialogFragment;
-import com.example.tj.weather.util.LocationSearchTask;
-import com.example.tj.weather.util.LocationSettingsVerifier;
+import com.example.tj.weather.util.NetworkLocationSearchTask;
+import com.example.tj.weather.util.NetworkLocationSettingsVerifier;
 import com.example.tj.weather.util.WeatherActivityHelper;
 import com.example.tj.weather.util.WeatherDownloadTask;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.wearable.MessageApi;
-import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Wearable;
 
 import java.io.IOException;
@@ -48,9 +44,9 @@ import static com.example.tj.weather.ui.CitySearchDialogFragment.CityChangeListe
  * The main Activity for the Android Weather application.  License: Public Domain.
  */
 public class WeatherActivity extends AppCompatActivity implements CityChangeListener,
-        WeatherDownloadTask.WeatherDownloadListener, LocationSearchTask.LocationChangeListener,
+        WeatherDownloadTask.WeatherDownloadListener, NetworkLocationSearchTask.NetworkLocationChangeListener,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,
-        LocationSettingsVerifier.LocationSettingsVerifierListener {
+        NetworkLocationSettingsVerifier.LocationSettingsVerifierListener {
 
     //The helper class for WeatherActivity.
     private WeatherActivityHelper weatherActivityHelper;
@@ -65,18 +61,22 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
       Toggled as servies are available.*/
     private boolean locationSupported;
 
+    //Is the app doing a search?
     private boolean processingSearch;
+
+    //Did the user do a manual search by location?
+    private boolean manualSearch;
 
     /*The LocationService handles location changes via google play services FusedLocationAPI.
        This is instantiated in the onconnected listener, as there is no point in creating it at
        all if the current environment doesn't support location services. e.g. location turned off.*/
-    private LocationSearchTask locationSearchTask;
+    private NetworkLocationSearchTask networkLocationSearchTask;
 
     //Google api client for play services.  Currently only used for aquiring location.
     private GoogleApiClient googleApiClient;
 
     //The utlity class that does location settings verification.
-    LocationSettingsVerifier locationSettingsVerifier;
+    NetworkLocationSettingsVerifier networkLocationSettingsVerifier;
 
     //The Broadcast receiver that notifies of a change in location settings.
     LocationSettingsReceiver locationSettingsReceiver = new LocationSettingsReceiver();
@@ -174,17 +174,39 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
 
         switch (id) {
             case R.id.city_search:
-                citySearchDialog.show(manager, "CitySearchDialog");
+                if (!processingSearch) {
+                    //the user is doing a manual search.
+                    manualSearch = true;
+
+                    citySearchDialog.show(manager, "CitySearchDialog");
+                }
                 break;
             case R.id.location_search:
                 if (!processingSearch) {
-                    locationSettingsVerifier.checkLocationServices();
+                    networkLocationSettingsVerifier.checkLocationServices();
+
                     break;
                 }
             case R.id.delete_locations:
                 weatherActivityHelper.deleteItems();
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    //Call back to the WeatherActivityHelper to handle the creation of the context menu.
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+
+        weatherActivityHelper.onCreateContextMenu(menu, v, menuInfo);
+    }
+
+    //Forward clicks to the context menu to the helper for processing.
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        weatherActivityHelper.onContextItemSelected(item);
+
+        return super.onContextItemSelected(item);
     }
 
     ////////////////Weather Download Task Callbacks/////////////////
@@ -195,7 +217,7 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     }
 
     /* Some error occurred while downloading or parsing data from the rest source.  It is most
-    likely an IOException.*/
+    likely an IOException.  THIS IS NOT CALLED ON THE MAIN THREAD! */
     @Override
     public void onWeatherDownloadError() {
         weatherActivityHelper.onWeatherDownloadError();
@@ -228,15 +250,23 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
      */
     //The user has requested that the city be changed.
     @Override
-    public void onCityChanged(String city, String countryOrState) {
+    public void onCityChanged(String city, String stateOrCountry) {
 
         processingSearch = true;
 
         weatherActivityHelper.showDialog();
 
-        weatherDownloader.beginDownloading(city, countryOrState);
+        weatherDownloader.beginDownloading(city, stateOrCountry);
 
         processingSearch = false;
+
+        //If the user is doing a manual search for a location, attempt to add it to the db.
+        if (manualSearch) {
+            //add this location to the database, if it doesn't already exist.
+            weatherActivityHelper.InsertDBLocation(city, stateOrCountry);
+
+            manualSearch = false;
+        }
     }
 
     public void onResume() {
@@ -245,11 +275,14 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
 
     //////////////Callback for the location change listener.//////////////
     @Override
-    public void onLocationChange(String[] location) {
+    public void onNetworkLocationChange(String[] location) {
         /* The location has changed.  Pull out the city and state, then request a download.
             The city is the first element and the state the second.  Now call onCityChanged
             with the new values.
          */
+
+        Log.i("Thread", Thread.currentThread().getName());
+
         onCityChanged(location[0], location[1]);
     }
 
@@ -258,13 +291,13 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     @Override
     public void onConnected(Bundle bundle) {
         //Here is where I check to make sure that location is set.
-        if (locationSettingsVerifier == null) {
-            locationSettingsVerifier = new LocationSettingsVerifier(googleApiClient);
-            locationSettingsVerifier.addLocationSettingsVerifierListener(this);
+        if (networkLocationSettingsVerifier == null) {
+            networkLocationSettingsVerifier = new NetworkLocationSettingsVerifier(googleApiClient);
+            networkLocationSettingsVerifier.addLocationSettingsVerifierListener(this);
         }
 
         //perform the initial location forecast search.
-        locationSettingsVerifier.checkLocationServices();
+        networkLocationSettingsVerifier.checkLocationServices();
     }
 
     @Override
@@ -284,24 +317,24 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
 
     ///////////////////////callbacks for the location settings verifier.////////////////////////
     @Override
-    public void onLocationSettingsVerified() {
+    public void onNetworkLocationSettingsVerified() {
         Log.i("Thread", Thread.currentThread().getName());
 
         locationSupported = true;
 
         //Instantiate the locationservicetask, if it has not already been done.
-        if (locationSearchTask == null) {
-            locationSearchTask = new LocationSearchTask(WeatherActivity.this,
+        if (networkLocationSearchTask == null) {
+            networkLocationSearchTask = new NetworkLocationSearchTask(WeatherActivity.this,
                     googleApiClient);
-            locationSearchTask.addListener(WeatherActivity.this);
+            networkLocationSearchTask.addListener(WeatherActivity.this);
         }
 
         //now do a search fo the current location and update the ui.
-        locationSearchTask.startLocationSearch();
+        networkLocationSearchTask.startLocationSearch();
     }
 
     @Override
-    public void onLocationSettingsNotVerified() {
+    public void onNetworkLocationSettingsNotVerified() {
         locationSupported = false;
 
         new AlertDialog.Builder(this)
@@ -311,11 +344,11 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     }
 
     @Override
-    protected void onNewIntent(Intent intent) {
+    public void onNewIntent(Intent intent) {
         wearSearchRequest(intent);
     }
 
-    protected void wearSearchRequest(Intent intent) {
+    private void wearSearchRequest(Intent intent) {
         String location = intent.getStringExtra("message");
 
         if (location != null) {

@@ -5,18 +5,12 @@ import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.util.Log;
-import android.widget.Toast;
 
-import com.example.tj.weather.WeatherActivity;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationSettingsRequest;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,7 +23,7 @@ import java.util.List;
  * This class will acquire the users current location, then pass a city and state or country
  * to its listeners.
  */
-public class LocationSearchTask implements LocationListener {
+public class NetworkLocationSearchTask implements LocationListener {
     private Context context;
 
     private GoogleApiClient googleApiClient;
@@ -37,14 +31,14 @@ public class LocationSearchTask implements LocationListener {
     private LocationRequest locationTypeRequest;
 
     //List of registered listeners who will be notified of location updates.
-    private List<LocationChangeListener> listeners;
+    private List<NetworkLocationChangeListener> listeners;
 
     //The is the listener that callers implement to be notified of changes.
-    public interface LocationChangeListener {
-        void onLocationChange(String[] location);
+    public interface NetworkLocationChangeListener {
+        void onNetworkLocationChange(String[] location);
     }
 
-    public LocationSearchTask(Context context, GoogleApiClient googleApiClient) {
+    public NetworkLocationSearchTask(Context context, GoogleApiClient googleApiClient) {
         this.context = context;
         this.googleApiClient = googleApiClient;
 
@@ -55,11 +49,11 @@ public class LocationSearchTask implements LocationListener {
         this.locationTypeRequest =LocationRequest.create();
         locationTypeRequest.setPriority(LocationRequest.PRIORITY_LOW_POWER);
 
-        listeners = new ArrayList<LocationChangeListener>();
+        listeners = new ArrayList<NetworkLocationChangeListener>();
     }
 
     //Adds a new listener to the list of LocationChangeListeners.
-    public void addListener(LocationChangeListener listener) {
+    public void addListener(NetworkLocationChangeListener listener) {
         listeners.add(listener);
     }
 
@@ -100,8 +94,8 @@ public class LocationSearchTask implements LocationListener {
                 //Notify listeners of the new data.
                 if (city != null || state != null) {
 
-                    for (LocationChangeListener l : listeners) {
-                        l.onLocationChange(data);
+                    for (NetworkLocationChangeListener l : listeners) {
+                        l.onNetworkLocationChange(data);
                     }
                 }
             }
