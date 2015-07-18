@@ -21,6 +21,9 @@ import java.util.List;
  * Utility class that verifies location services and reports back to listeners.
  * It is important to make sure that the methods in this class are not called before a
  * connection to Google Play Location Services is established.
+ *
+ *
+ * TODO: I have forgotten to check for mobile data access.   Do that.
  */
 public class LocationSettingsVerifier {
     public interface LocationSettingsVerifierListener {

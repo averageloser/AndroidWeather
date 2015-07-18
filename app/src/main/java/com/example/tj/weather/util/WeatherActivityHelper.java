@@ -5,13 +5,18 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Adapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -20,6 +25,10 @@ import android.widget.ViewFlipper;
 
 import com.example.tj.weather.R;
 import com.example.tj.weather.WeatherActivity;
+import com.example.tj.weather.database.DBLocation;
+import com.example.tj.weather.database.DBLocationAdapter;
+import com.example.tj.weather.database.DBManager;
+import com.example.tj.weather.database.DBModel;
 import com.example.tj.weather.model.ExtendedWeatherForecastAdapter;
 import com.example.tj.weather.model.WeatherForecast;
 import com.example.tj.weather.model.WeatherLocation;
@@ -32,7 +41,9 @@ import java.util.List;
  * This class will handle instantiation and modification of all ui components,
  * as well as weather download callbacks.
  */
-public class WeatherActivityHelper {
+public class WeatherActivityHelper  implements LoaderManager.LoaderCallbacks<List<DBLocation>> {
+    public static final int DB_LOADER = 1;
+
     private WeatherActivity activity;
 
     private Toolbar toolbar;
@@ -47,9 +58,29 @@ public class WeatherActivityHelper {
     //Child views of the extended forecast layout.
     private ListView extendedForecastListView;
 
-    //Progress dialog that shows when a download is taking place.
-    ProgressDialog progressDialog;
+    //Database listview.
+    private ListView databaseListView;
 
+    //The adapter for the databaseListView.
+    private DBLocationAdapter databaseListViewAdapter;
+
+    //Progress dialog that shows when a download is taking place.
+    private ProgressDialog progressDialog;
+
+    //The loader for the database view.
+    private Loader<List<DBLocation>> databaseLoader;
+
+    //The Database Manager.
+    private DBManager dbManager;
+
+    //the Model for the database.
+    private DBModel dbModel;
+
+    //The list of DBLocations from the database.
+    private List dbLocations;
+
+    //did I already do the initial force load for the loader?
+    private boolean didForceLoad;
 
     public WeatherActivityHelper(WeatherActivity activity) {
         this.activity = activity;
@@ -66,8 +97,15 @@ public class WeatherActivityHelper {
         progressDialog = new ProgressDialog(activity);
         progressDialog.setMessage("Processing...");
 
+        //the db manager.
+        dbManager = new DBManager(activity);
+
+        //the model for the database.
+        dbModel = new DBModel(dbManager.getWritableDatabase());
+
         flipper = (ViewFlipper) activity.findViewById(R.id.flipper);
 
+        View databaseLayout = inflater.inflate(R.layout.database_view_layout, null);
         View currentForecastLayout = inflater.inflate(R.layout.current_forecast_layout, null);
         View extendedForecastLayout = inflater.inflate(R.layout.extended_forecast_layout, null);
         View extendedForecastHourlyLayout = inflater.inflate(R.layout.extended_forecast_hourly_layout, null);
@@ -85,12 +123,23 @@ public class WeatherActivityHelper {
         //ListView for the extended forecast.
         extendedForecastListView = (ListView) extendedForecastLayout.findViewById(R.id.extended_forecast_listView);
 
+        //ListView for the database view.
+        databaseListView = (ListView) databaseLayout.findViewById(R.id.database_listView);
+
         flipper.setAnimateFirstView(true);
         flipper.setInAnimation(activity, android.R.anim.fade_in);
         flipper.setOutAnimation(activity, android.R.anim.fade_out);
         flipper.addView(currentForecastLayout);
         flipper.addView(extendedForecastLayout);
+        flipper.addView(databaseLayout);
 
+        //////////////////Test.  Add a couple of db entries.////////////
+        for (int i = 0; i < 5; i++) {
+            dbModel.insert(new DBLocation("Naples", "FL"));
+        }
+
+        //initialize the loader.
+        activity.getSupportLoaderManager().initLoader(DB_LOADER, null, this);
     }
 
     /*Handles touch for the view flipper.   For simplicity, I choose to use the fade in and out
@@ -231,6 +280,7 @@ public class WeatherActivityHelper {
                     .setSmallIcon(R.drawable.w01d)
                     .setContentTitle("Current Forecast")
                     .setContentText("Temp " + weatherLocation.get(0).getWeatherForecastList().get(0).getTemperature())
+                    .setPriority(Notification.PRIORITY_HIGH)
                     .extend(wear)
                     .build();
 
@@ -250,6 +300,14 @@ public class WeatherActivityHelper {
 
         //finally dismiss the dialog.
         progressDialog.dismiss();
+
+
+        ///////////////////////////////////////////force a loan on the loader.////////////////////////////////////////
+        if (!didForceLoad) {
+            databaseLoader.forceLoad();
+
+            didForceLoad = true;
+        }
     } //End OnWeatherDownloadComplete().
 
     //show a dialog explaining an error occurred.
@@ -273,5 +331,63 @@ public class WeatherActivityHelper {
     //Used by WeatherActivity to show the progressDialog.
     public void showDialog() {
         progressDialog.show();
+    }
+
+    @Override
+    public Loader onCreateLoader(int id, Bundle args) {
+        databaseLoader = new AsyncTaskLoader<List<DBLocation>>(activity) {
+            @Override
+            public List<DBLocation> loadInBackground() {
+                return dbModel.getAll();
+            }
+        };
+        return databaseLoader;
+    }
+
+    ////////////////////////////////////////The Loader callbacks/////////////////
+    @Override
+    public void onLoadFinished(Loader<List<DBLocation>> loader, List<DBLocation> data) {
+        dbLocations = data;
+        //create the listview adapter, if it is null.
+        if (databaseListViewAdapter == null) {
+            databaseListViewAdapter = new DBLocationAdapter(activity, R.layout.database_listview_row, dbLocations);
+
+            databaseListView.setAdapter(databaseListViewAdapter);
+        }
+
+        Log.i("dataSize", String.valueOf(data.size()));
+
+        Log.i("content", "content changed");
+
+        //Notify the adapter of the change in data.
+        databaseListViewAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onLoaderReset(Loader<List<DBLocation>> loader) {
+        //not used here.
+    }
+
+
+    //Adds a location to the database in response to a city search.
+    public void InsertDBLocation(String city, String stateOrCountry) {
+        DBLocation dbLocation = new DBLocation(city, stateOrCountry);
+
+        dbModel.insert(dbLocation);
+
+        databaseListViewAdapter.add(dbLocation);
+
+        //tell the loader to reload the data.
+        databaseLoader.onContentChanged();
+    }
+
+    //Deletes all items in the database in response to user pressing the trash icon in the toolbar.
+    public void deleteItems() {
+        dbModel.deleteAll();
+
+        databaseListViewAdapter.clear();
+
+        //Tell the loader that the date changed.
+        databaseLoader.onContentChanged();
     }
 }

@@ -161,6 +161,7 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
         return true;
     }
 
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -178,7 +179,10 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
             case R.id.location_search:
                 if (!processingSearch) {
                     locationSettingsVerifier.checkLocationServices();
+                    break;
                 }
+            case R.id.delete_locations:
+                weatherActivityHelper.deleteItems();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -282,9 +286,6 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     @Override
     public void onLocationSettingsVerified() {
         Log.i("Thread", Thread.currentThread().getName());
-
-        //Location settings are adequate, so set the boolean.
-        Toast.makeText(WeatherActivity.this, "LocationSettingsResult OK", Toast.LENGTH_LONG).show();
 
         locationSupported = true;
 

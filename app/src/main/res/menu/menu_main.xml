@@ -6,13 +6,15 @@
         android:id="@+id/city_search"
         android:title="City Search"
         android:icon="@android:drawable/ic_search_category_default"
-        android:orderInCategory="2"
         app:showAsAction="always" />
     <item
         android:id="@+id/location_search"
         android:title="Location Search"
         android:icon="@drawable/gpsicon"
-        android:orderInCategory="1"
         app:showAsAction="always" />
+    <item
+        android:id="@+id/delete_locations"
+        android:title="Clear Locations"
+        app:showAsAction="never" />
 
 </menu>
