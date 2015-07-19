@@ -90,7 +90,7 @@ public class WearMainActivity extends Activity implements GoogleApiClient.Connec
 
         //if google play services is not installed, this should prompt user to download it.
         if (result != ConnectionResult.SUCCESS) {
-            availability.getErrorDialog(this, result, 0);
+            availability.getErrorDialog(this, result, 0).show();
         } else {
             //instantiate googleApiClient for play location services, if we haven't already.
             if (googleApiClient == null) {

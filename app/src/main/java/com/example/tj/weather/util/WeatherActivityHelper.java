@@ -414,8 +414,16 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<List
             //update the adapter.
             databaseListViewAdapter.notifyDataSetChanged();
         }
+    }
 
+    //Deletes all items in the database in response to user pressing the trash icon in the toolbar.
+    public void deleteItems() {
+        dbModel.deleteAll();
 
+        databaseListViewAdapter.clear();
+
+        //Tell the loader that the date changed.
+        databaseLoader.onContentChanged();
     }
 
     //////////////////////////////Listener for the listview for single touches.///////////////////////
@@ -434,16 +442,6 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<List
             activity.onCityChanged(city, stateOrCountry);
         }
     };
-
-    //Deletes all items in the database in response to user pressing the trash icon in the toolbar.
-    public void deleteItems() {
-        dbModel.deleteAll();
-
-        databaseListViewAdapter.clear();
-
-        //Tell the loader that the date changed.
-        databaseLoader.onContentChanged();
-    }
 
     //////////////////////the context menu for the databast list view//////////////////////
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
