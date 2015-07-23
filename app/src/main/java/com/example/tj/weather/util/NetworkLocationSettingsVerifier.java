@@ -1,5 +1,11 @@
 package com.example.tj.weather.util;
 
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.support.v4.net.ConnectivityManagerCompat;
+import android.util.Log;
+import android.widget.Switch;
+
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
@@ -14,14 +20,16 @@ import java.util.List;
 /**
  * Created by tom on 6/14/2015.
  * License: public domain.
- * Utility class that verifies location services and reports back to listeners.
+ * Utility class that verifies network and location services and reports back to listeners.
  * It is important to make sure that the methods in this class are not called before a
  * connection to Google Play Location Services is established.
- *
- *
+ * <p/>
+ * <p/>
  * TODO: I have forgotten to check for mobile data access.   Do that.
  */
 public class NetworkLocationSettingsVerifier {
+    private ConnectivityManager cm;
+
     public interface LocationSettingsVerifierListener {
         void onNetworkLocationSettingsVerified();
 
@@ -37,8 +45,10 @@ public class NetworkLocationSettingsVerifier {
     location status and also used by NetworkLocationSearchTask. */
     private LocationRequest locationLowPoweRequest;
 
-    public NetworkLocationSettingsVerifier(GoogleApiClient googleApiClient) {
+    public NetworkLocationSettingsVerifier(GoogleApiClient googleApiClient, ConnectivityManager cm) {
         this.googleApiClient = googleApiClient;
+
+        this.cm = cm;
 
         listeners = new ArrayList();
 
@@ -81,14 +91,31 @@ public class NetworkLocationSettingsVerifier {
         result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
             @Override
             public void onResult(LocationSettingsResult result) {
-                if (!result.getLocationSettingsStates().isNetworkLocationUsable()) {
-                    //Location setting are inadequate.  Notify Listeners.
-                    notifyListenersLocationServicesNotVerified();
-                } else {
-                    //Location settings are adequate, so notify listeners.
+                if (isDataNetworkActive() || result.getLocationSettingsStates().isNetworkLocationUsable()) {
                     notifyListenersLocationServicesVerified();
-                    }
+                } else {
+                    ///Location setting are inadequate.  Notify Listeners.
+                    notifyListenersLocationServicesNotVerified();
                 }
+            }
         });
+    }
+
+    private boolean isDataNetworkActive() {
+        NetworkInfo[] netInfo = cm.getAllNetworkInfo();
+
+        Log.i("NetworkInfoSize", String.valueOf(netInfo.length));
+
+        for (NetworkInfo ni : netInfo) {
+            int type = ni.getType();
+
+            if (type == ConnectivityManager.TYPE_WIFI || type == ConnectivityManager.TYPE_MOBILE) {
+                if (ni.isConnected()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

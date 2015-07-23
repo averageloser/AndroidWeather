@@ -1,6 +1,7 @@
 
 package com.example.tj.weather;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
@@ -8,6 +9,7 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -52,22 +54,16 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     private WeatherActivityHelper weatherActivityHelper;
 
     //The city search DialogFragment
-    private CitySearchDialogFragment citySearchDialog = new CitySearchDialogFragment();
+    private CitySearchDialogFragment citySearchDialog;
 
     //The Fragment that does the weather downloading.
-    private WeatherDownloadTask weatherDownloader = new WeatherDownloadTask();
+    private WeatherDownloadTask weatherDownloader;
 
     /*Boolean to tell me if proper location services are enabled (wifi and network). Low power use.
       Toggled as servies are available.*/
     private boolean locationSupported;
 
-    //Is the app doing a search?
-    private boolean processingSearch;
-
-    //Did the user do a manual search by location?
-    private boolean manualSearch;
-
-    /*The LocationService handles location changes via google play services FusedLocationAPI.
+    /*handles location changes via google play services FusedLocationAPI.
        This is instantiated in the onconnected listener, as there is no point in creating it at
        all if the current environment doesn't support location services. e.g. location turned off.*/
     private NetworkLocationSearchTask networkLocationSearchTask;
@@ -90,7 +86,7 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
         weatherActivityHelper = new WeatherActivityHelper(this);
 
         //Add the Fragments to the Activity.
-        addFragments();
+        createAndManageFragmnts();
 
     }//end onCreate()
 
@@ -122,12 +118,15 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     }
 
     //Add headless Fragments used for processing.
-    private void addFragments() {
+    private void createAndManageFragmnts() {
         FragmentManager mgr = getSupportFragmentManager();
         FragmentTransaction trans = mgr.beginTransaction();
 
+        weatherDownloader = new WeatherDownloadTask();
         //register this activity as a listener to the weather downloader.
         weatherDownloader.WeatherDownloadListener(this);
+
+        citySearchDialog = new CitySearchDialogFragment();
 
         //add both Fragments to the Activity.
         trans.add(weatherDownloader, "weatherDownloader");
@@ -174,19 +173,13 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
 
         switch (id) {
             case R.id.city_search:
-                if (!processingSearch) {
-                    //the user is doing a manual search.
-                    manualSearch = true;
-
+                if (!citySearchDialog.isVisible() && !citySearchDialog.isAdded()) {
                     citySearchDialog.show(manager, "CitySearchDialog");
                 }
                 break;
             case R.id.location_search:
-                if (!processingSearch) {
-                    networkLocationSettingsVerifier.checkLocationServices();
-
-                    break;
-                }
+                networkLocationSettingsVerifier.checkLocationServices();
+                break;
             case R.id.delete_locations:
                 weatherActivityHelper.deleteItems();
         }
@@ -252,21 +245,12 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     @Override
     public void onCityChanged(String city, String stateOrCountry) {
 
-        processingSearch = true;
-
         weatherActivityHelper.showDialog();
 
         weatherDownloader.beginDownloading(city, stateOrCountry);
 
-        processingSearch = false;
-
-        //If the user is doing a manual search for a location, attempt to add it to the db.
-        if (manualSearch) {
-            //add this location to the database, if it doesn't already exist.
-            weatherActivityHelper.InsertDBLocation(city, stateOrCountry);
-
-            manualSearch = false;
-        }
+        //add this location to the database, if it doesn't already exist.
+        weatherActivityHelper.insertDBLocation(city, stateOrCountry);
     }
 
     public void onResume() {
@@ -292,7 +276,8 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     public void onConnected(Bundle bundle) {
         //Here is where I check to make sure that location is set.
         if (networkLocationSettingsVerifier == null) {
-            networkLocationSettingsVerifier = new NetworkLocationSettingsVerifier(googleApiClient);
+            networkLocationSettingsVerifier = new NetworkLocationSettingsVerifier(googleApiClient,
+                    (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE));
             networkLocationSettingsVerifier.addLocationSettingsVerifierListener(this);
         }
 
@@ -329,7 +314,6 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
             networkLocationSearchTask.addListener(WeatherActivity.this);
         }
 
-        //now do a search fo the current location and update the ui.
         networkLocationSearchTask.startLocationSearch();
     }
 
@@ -339,7 +323,8 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
 
         new AlertDialog.Builder(this)
                 .setTitle("Location problem")
-                .setMessage("Problem connecting to location services.  Check your settings.")
+                .setMessage("Problem connecting to network location services. \n\n" +
+                        " Check your settings network and or location settings.")
                 .show();
     }
 

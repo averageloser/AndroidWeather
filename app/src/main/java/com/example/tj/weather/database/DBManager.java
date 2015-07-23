@@ -3,6 +3,7 @@ package com.example.tj.weather.database;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.provider.BaseColumns;
 import android.util.Log;
 
 /**
@@ -17,15 +18,15 @@ public final class DBManager extends SQLiteOpenHelper {
     public static final int VERSION = 1;
 
     public static final String TABLE_NAME = "dblocationsdb";
-    public static final String COLUMN_ID = "id";
+    public static final String COLUMN_ID = "_id";
     public static final String COLUMN_CITY = "city";
     public static final String COLUMN_STATE = "state";
 
-    public static final String dbCreate = "CREATE TABLE "
+    public static final String dbCreate = "create table "
             + TABLE_NAME + " ( "
-            + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-            + COLUMN_CITY + " TEXT NOT NULL, "
-            + COLUMN_STATE + " TEXT NOT NULL);";
+            + COLUMN_ID + " integer primary key autoincrement, "
+            + COLUMN_CITY + " text unique, "
+            + COLUMN_STATE + " text unique);";
 
     public DBManager(Context context) {
         super(context, DATABASE_NAME, null, VERSION);

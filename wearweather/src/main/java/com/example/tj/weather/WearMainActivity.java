@@ -14,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.tj.weather.util.WearMessageTask;
+import com.example.tom.wearweather.R;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -124,7 +125,7 @@ public class WearMainActivity extends Activity implements GoogleApiClient.Connec
     ////////////////////////////Google api client callbacks.///////////////////////
     @Override
     public void onConnected(Bundle bundle) {
-        Toast.makeText(this, "Connected to Google API Services.", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "Connected to Google API Services.", Toast.LENGTH_SHORT).show();
     }
 
     @Override

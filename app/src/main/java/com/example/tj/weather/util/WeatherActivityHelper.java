@@ -2,14 +2,15 @@ package com.example.tj.weather.util;
 
 import android.app.Notification;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.res.Resources;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteException;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
-import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -18,7 +19,6 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -28,14 +28,15 @@ import android.widget.ViewFlipper;
 
 import com.example.tj.weather.R;
 import com.example.tj.weather.WeatherActivity;
+import com.example.tj.weather.database.DBAdapter;
 import com.example.tj.weather.database.DBLocation;
-import com.example.tj.weather.database.DBLocationAdapter;
 import com.example.tj.weather.database.DBManager;
 import com.example.tj.weather.database.DBModel;
 import com.example.tj.weather.model.ExtendedWeatherForecastAdapter;
 import com.example.tj.weather.model.WeatherForecast;
 import com.example.tj.weather.model.WeatherLocation;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -44,7 +45,7 @@ import java.util.List;
  * This class will handle instantiation and modification of all ui components,
  * as well as weather download callbacks.
  */
-public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<List<DBLocation>> {
+public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Cursor> {
     public static final int DB_LOADER = 1;
 
     private WeatherActivity activity;
@@ -65,13 +66,13 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<List
     private ListView databaseListView;
 
     //The adapter for the databaseListView.
-    private DBLocationAdapter databaseListViewAdapter;
+    private DBAdapter databaseListViewAdapter;
 
     //Progress dialog that shows when a download is taking place.
     private ProgressDialog progressDialog;
 
     //The loader for the database view.
-    private Loader<List<DBLocation>> databaseLoader;
+    private CursorLoader databaseLoader;
 
     //The Database Manager.
     private DBManager dbManager;
@@ -80,10 +81,12 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<List
     private DBModel dbModel;
 
     //The list of DBLocations from the database.
-    private List<DBLocation> dbLocations;
+    private List<DBLocation> dbLocations = new ArrayList<>();
 
     //did I already do the initial force load for the loader?
     private boolean didForceLoad;
+
+    View databaseLayout;
 
     public WeatherActivityHelper(WeatherActivity activity) {
         this.activity = activity;
@@ -106,9 +109,12 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<List
         //the model for the database.
         dbModel = new DBModel(dbManager.getWritableDatabase());
 
+        //create the listview adapter, if it is null.
+        databaseListViewAdapter = new DBAdapter(activity, null);
+
         flipper = (ViewFlipper) activity.findViewById(R.id.flipper);
 
-        View databaseLayout = inflater.inflate(R.layout.database_view_layout, null);
+        databaseLayout = inflater.inflate(R.layout.database_view_layout, null);
         View currentForecastLayout = inflater.inflate(R.layout.current_forecast_layout, null);
         View extendedForecastLayout = inflater.inflate(R.layout.extended_forecast_layout, null);
         View extendedForecastHourlyLayout = inflater.inflate(R.layout.extended_forecast_hourly_layout, null);
@@ -128,6 +134,8 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<List
 
         //ListView for the database view.
         databaseListView = (ListView) databaseLayout.findViewById(R.id.database_listView);
+
+        databaseListView.setAdapter(databaseListViewAdapter);
 
         //Assign the database list view a listener for clicks.
         databaseListView.setOnItemClickListener(databaseListViewClickListener);
@@ -190,6 +198,7 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<List
         if (weatherLocation.size() > 0) {
             WeatherLocation current = weatherLocation.get(0);
 
+            //Grab the weather forecast list.
             List<WeatherForecast> currentForecast = current.getWeatherForecastList();
 
             //The WeatherForecast.
@@ -308,11 +317,13 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<List
 
 
         ///////////////////////////////////////////force a loan on the loader.////////////////////////////////////////
+       /*
         if (!didForceLoad) {
             databaseLoader.forceLoad();
 
             didForceLoad = true;
         }
+        */
     } //End OnWeatherDownloadComplete().
 
     //show a dialog explaining an error occurred.
@@ -339,88 +350,71 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<List
     }
 
     @Override
-    public Loader onCreateLoader(int id, Bundle args) {
-        databaseLoader = new AsyncTaskLoader<List<DBLocation>>(activity) {
+    public Loader onCreateLoader(int id, Bundle bundle) {
+        databaseLoader = new CursorLoader(activity) {
             @Override
-            public List<DBLocation> loadInBackground() {
-                return dbModel.getAll();
+            public Cursor loadInBackground() {
+                Cursor cursor = dbModel.getAllCursor();
+                return cursor;
             }
         };
+
+        //databaseLoader.forceLoad();
+
         return databaseLoader;
     }
 
     ////////////////////////////////////////The Loader callbacks/////////////////
     @Override
-    public void onLoadFinished(Loader<List<DBLocation>> loader, List<DBLocation> data) {
-        dbLocations = data;
-        //create the listview adapter, if it is null.
-        if (databaseListViewAdapter == null) {
-            databaseListViewAdapter = new DBLocationAdapter(activity, R.layout.database_listview_row, dbLocations);
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
 
-            databaseListView.setAdapter(databaseListViewAdapter);
-        }
+        Log.i("Loader", "Load Finished");
 
-        Log.i("dataSize", String.valueOf(data.size()));
-
-        Log.i("content", "content changed");
-
-        //Notify the adapter of the change in data.
-        databaseListViewAdapter.notifyDataSetChanged();
+        databaseListViewAdapter.swapCursor(data);
     }
 
     @Override
-    public void onLoaderReset(Loader<List<DBLocation>> loader) {
-        //not used here.
+    public void onLoaderReset(Loader<Cursor> loader) {
+        databaseListViewAdapter.swapCursor(null);
     }
 
     //Adds a location to the database in response to a city search.
-    public void InsertDBLocation(String city, String stateOrCountry) {
+    public void insertDBLocation(String city, String stateOrCountry) {
         DBLocation location = new DBLocation(city, stateOrCountry);
 
         /* I don't want duplicate locations in the database, and instead of using a Set, I can
         just do a quick check of the list to make sure that this location doesn't already exist.
          */
 
-        boolean alreadyExists = false;
-
-        for (DBLocation l: dbLocations) {
-            if (l.getCity().equals(location.getCity()) && l.getStateOrCountry().equals(location.getStateOrCountry())) {
-                alreadyExists = true;
-            }
-        }
-
-        if (!alreadyExists) {
-
+        try {
             if (dbModel.insert(location)) {
 
-                dbLocations.add(location);
+                Log.i("insert", "location inserted");
 
-                //update the adapter.
-                databaseListViewAdapter.notifyDataSetChanged();
+                databaseLoader.onContentChanged();
             }
+        } catch (SQLiteException e) {
+            Log.i("SQL", e.getMessage());
         }
     }
 
     public void deleteDBLocation(int position) {
-        DBLocation location = dbLocations.get(position);
+        long id = databaseListViewAdapter.getItemId(position);
 
-        if (dbModel.delete(location)) {
+
+        if (dbModel.delete(id)) {
             Log.i("delete", "location deleted");
-            //Delete if from the list
-            dbLocations.remove(location);
-
-            databaseListViewAdapter.remove(location);
 
             //update the adapter.
-            databaseListViewAdapter.notifyDataSetChanged();
+            databaseLoader.onContentChanged();
         }
     }
 
     //Deletes all items in the database in response to user pressing the trash icon in the toolbar.
     public void deleteItems() {
-        dbModel.deleteAll();
-
-        databaseListViewAdapter.clear();
+        if (dbModel.deleteAll()) {
+            Log.i("DB Delete", "complete");
+        }
 
         //Tell the loader that the date changed.
         databaseLoader.onContentChanged();
