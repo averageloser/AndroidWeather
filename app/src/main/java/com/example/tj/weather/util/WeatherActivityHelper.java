@@ -353,8 +353,21 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         Log.i("Loader", "Load Finished");
 
-        databaseListViewAdapter.swapCursor(data);
+        dbLocations.clear();
 
+        data.moveToFirst();
+
+        while(!data.isAfterLast()) {
+            DBLocation location = new DBLocation();
+            location.setCity(data.getString(1));
+            location.setStateOrCountry(data.getString(2));
+
+            dbLocations.add(location);
+
+            data.moveToNext();
+        }
+
+        databaseListViewAdapter.swapCursor(data);
     }
 
     @Override
