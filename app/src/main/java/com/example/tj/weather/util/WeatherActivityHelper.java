@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteException;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.provider.UserDictionary;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
@@ -392,8 +393,6 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
 
                 Log.i("insert", "location inserted");
 
-                dbLocations.add(location);
-
                 databaseLoader.onContentChanged();
             }
         } catch (SQLiteException e) {
@@ -407,8 +406,6 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
 
         if (dbModel.delete(id)) {
             Log.i("delete", "location deleted");
-
-            dbLocations.remove(position);
 
             //update the adapter.
             databaseLoader.onContentChanged();
