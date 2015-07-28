@@ -25,8 +25,8 @@ public final class DBManager extends SQLiteOpenHelper {
     public static final String dbCreate = "create table "
             + TABLE_NAME + " ( "
             + COLUMN_ID + " integer primary key autoincrement, "
-            + COLUMN_CITY + " text unique, "
-            + COLUMN_STATE + " text unique);";
+            + COLUMN_CITY + " text not null, "
+            + COLUMN_STATE + " text not null);";
 
     public DBManager(Context context) {
         super(context, DATABASE_NAME, null, VERSION);

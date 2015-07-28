@@ -249,12 +249,8 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
 
         weatherDownloader.beginDownloading(city, stateOrCountry);
 
-        //add this location to the database, if it doesn't already exist.
-        weatherActivityHelper.insertDBLocation(city, stateOrCountry);
-    }
-
-    public void onResume() {
-        super.onResume();
+        //add this location to the database.
+        weatherActivityHelper.insertDBLocation(city.toUpperCase(), stateOrCountry.toUpperCase());
     }
 
     //////////////Callback for the location change listener.//////////////
@@ -303,7 +299,9 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     ///////////////////////callbacks for the location settings verifier.////////////////////////
     @Override
     public void onNetworkLocationSettingsVerified() {
-        Log.i("Thread", Thread.currentThread().getName());
+        Log.i("Location settings", "Loc verified");
+
+        Toast.makeText(this, "location verified", Toast.LENGTH_SHORT).show();
 
         locationSupported = true;
 
@@ -319,7 +317,11 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
 
     @Override
     public void onNetworkLocationSettingsNotVerified() {
-        locationSupported = false;
+        //locationSupported = false;
+
+        Toast.makeText(this, "location not verified", Toast.LENGTH_SHORT).show();
+
+        Log.i("Location settings", "Loc not verified");
 
         new AlertDialog.Builder(this)
                 .setTitle("Location problem")

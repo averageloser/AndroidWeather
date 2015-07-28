@@ -83,9 +83,6 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
     //The list of DBLocations from the database.
     private List<DBLocation> dbLocations = new ArrayList<>();
 
-    //did I already do the initial force load for the loader?
-    private boolean didForceLoad;
-
     View databaseLayout;
 
     public WeatherActivityHelper(WeatherActivity activity) {
@@ -134,14 +131,13 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
 
         //ListView for the database view.
         databaseListView = (ListView) databaseLayout.findViewById(R.id.database_listView);
-
-        databaseListView.setAdapter(databaseListViewAdapter);
-
         //Assign the database list view a listener for clicks.
         databaseListView.setOnItemClickListener(databaseListViewClickListener);
 
         //register databast list view for context menu.
         activity.registerForContextMenu(databaseListView);
+
+        databaseListView.setAdapter(databaseListViewAdapter);
 
         flipper.setAnimateFirstView(true);
         flipper.setInAnimation(activity, android.R.anim.fade_in);
@@ -314,16 +310,6 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
 
         //finally dismiss the dialog.
         progressDialog.dismiss();
-
-
-        ///////////////////////////////////////////force a loan on the loader.////////////////////////////////////////
-       /*
-        if (!didForceLoad) {
-            databaseLoader.forceLoad();
-
-            didForceLoad = true;
-        }
-        */
     } //End OnWeatherDownloadComplete().
 
     //show a dialog explaining an error occurred.
@@ -359,18 +345,16 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
             }
         };
 
-        //databaseLoader.forceLoad();
-
         return databaseLoader;
     }
 
     ////////////////////////////////////////The Loader callbacks/////////////////
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-
         Log.i("Loader", "Load Finished");
 
         databaseListViewAdapter.swapCursor(data);
+
     }
 
     @Override
@@ -379,22 +363,29 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
     }
 
     //Adds a location to the database in response to a city search.
-    public void insertDBLocation(String city, String stateOrCountry) {
+    public void insertDBLocation(final String city, final String stateOrCountry) {
         DBLocation location = new DBLocation(city, stateOrCountry);
 
-        /* I don't want duplicate locations in the database, and instead of using a Set, I can
-        just do a quick check of the list to make sure that this location doesn't already exist.
-         */
+        boolean unique = true;
+
+        //This is an expensive search.
+        for (DBLocation loc : dbLocations) {
+            if (location.getCity().equals(loc.getCity()) && location.getStateOrCountry().equals(loc.getStateOrCountry())) {
+                unique = false;
+            }
+        }
 
         try {
-            if (dbModel.insert(location)) {
+            if (unique && dbModel.insert(location)) {
 
                 Log.i("insert", "location inserted");
+
+                dbLocations.add(location);
 
                 databaseLoader.onContentChanged();
             }
         } catch (SQLiteException e) {
-            Log.i("SQL", e.getMessage());
+            Toast.makeText(activity, e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -405,6 +396,8 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
         if (dbModel.delete(id)) {
             Log.i("delete", "location deleted");
 
+            dbLocations.remove(position);
+
             //update the adapter.
             databaseLoader.onContentChanged();
         }
@@ -414,9 +407,11 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
     public void deleteItems() {
         if (dbModel.deleteAll()) {
             Log.i("DB Delete", "complete");
+
+            dbLocations.clear();
         }
 
-        //Tell the loader that the date changed.
+        //Tell the loader that the data changed.
         databaseLoader.onContentChanged();
     }
 
@@ -432,6 +427,8 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
 
             String stateOrCountry = location.getStateOrCountry();
 
+            Log.i("db click", city + " " + stateOrCountry);
+
             //call back to the activity to do the location search.
             activity.onCityChanged(city, stateOrCountry);
         }
@@ -445,6 +442,6 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
     public void onContextItemSelected(MenuItem item) {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
 
-        deleteDBLocation((info.position));
+        deleteDBLocation(info.position);
     }
 }

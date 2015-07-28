@@ -24,12 +24,17 @@ public class DBModel {
         }
 
         return db.insertWithOnConflict(DBManager.TABLE_NAME, null, getContentValuesFromObject(location),
-                SQLiteDatabase.CONFLICT_IGNORE) != -1;
+                SQLiteDatabase.CONFLICT_FAIL) != -1;
     }
 
     public boolean delete(long id) {
         return db.delete(DBManager.TABLE_NAME, DBManager.COLUMN_ID +
                 " =?", new String[]{String.valueOf(id)}) != 0;
+    }
+
+    public boolean delete(DBLocation location) {
+        return db.delete(DBManager.TABLE_NAME, DBManager.COLUMN_CITY +
+                "=? AND " + DBManager.COLUMN_STATE + "=?" , new String[]{location.getCity(), location.getStateOrCountry()}) != 0;
     }
 
     /* Pretty self-explanatory.  Query the db for all results, iterate over the cursor, create locations,

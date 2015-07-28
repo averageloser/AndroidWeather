@@ -25,7 +25,6 @@ import java.util.List;
  * connection to Google Play Location Services is established.
  * <p/>
  * <p/>
- * TODO: I have forgotten to check for mobile data access.   Do that.
  */
 public class NetworkLocationSettingsVerifier {
     private ConnectivityManager cm;
@@ -91,7 +90,7 @@ public class NetworkLocationSettingsVerifier {
         result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
             @Override
             public void onResult(LocationSettingsResult result) {
-                if (isDataNetworkActive() || result.getLocationSettingsStates().isNetworkLocationUsable()) {
+                if (isDataNetworkActive() && result.getLocationSettingsStates().isNetworkLocationPresent()) {
                     notifyListenersLocationServicesVerified();
                 } else {
                     ///Location setting are inadequate.  Notify Listeners.
