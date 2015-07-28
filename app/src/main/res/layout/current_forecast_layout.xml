@@ -24,7 +24,8 @@
         android:layout_below="@id/currentViewDescription"
         android:layout_centerHorizontal="true"
         android:textColor="@android:color/black"
-        android:textSize="20sp" />
+        android:textSize="20sp"
+        android:text="If this doesn't change, something is wrong."/>
 
     <LinearLayout
         android:id="@+id/currentIconDetailsTempView"

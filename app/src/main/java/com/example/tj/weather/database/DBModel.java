@@ -93,4 +93,10 @@ public class DBModel {
 
         return values;
     }
+
+    public void close() {
+        if (db != null && db.isOpen()) {
+            db.close();
+        }
+    }
 }

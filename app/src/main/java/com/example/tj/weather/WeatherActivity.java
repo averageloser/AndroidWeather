@@ -225,6 +225,8 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
         /*If google api client is not connected, or it not connecting, try to connect.  This will
         happen when the activity is restarted i.e. coming from background to foreground.*/
         connectToGoogleApiServices();
+
+        weatherActivityHelper.openDB();
     }
 
     public void onStop() {
@@ -236,6 +238,8 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
         googleApiClient.disconnect();
 
         locationSupported = false;
+
+        weatherActivityHelper.closeDB();
     }
 
     /**

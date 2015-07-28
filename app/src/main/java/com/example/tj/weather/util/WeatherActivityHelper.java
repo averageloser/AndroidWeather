@@ -139,6 +139,9 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
 
         databaseListView.setAdapter(databaseListViewAdapter);
 
+        //put something here for empty.  Maybe an imageview, or at least a textview.
+        //databaseListView.setEmptyView();
+
         flipper.setAnimateFirstView(true);
         flipper.setInAnimation(activity, android.R.anim.fade_in);
         flipper.setOutAnimation(activity, android.R.anim.fade_out);
@@ -355,16 +358,12 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
 
         dbLocations.clear();
 
-        data.moveToFirst();
-
-        while(!data.isAfterLast()) {
+        while(data.moveToNext()) {
             DBLocation location = new DBLocation();
             location.setCity(data.getString(1));
             location.setStateOrCountry(data.getString(2));
 
             dbLocations.add(location);
-
-            data.moveToNext();
         }
 
         databaseListViewAdapter.swapCursor(data);
@@ -416,6 +415,14 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
         }
     }
 
+    public void openDB() {
+        dbManager.onOpen(dbManager.getWritableDatabase());
+    }
+
+    public void closeDB() {
+        dbModel.close();
+    }
+
     //Deletes all items in the database in response to user pressing the trash icon in the toolbar.
     public void deleteItems() {
         if (dbModel.deleteAll()) {
@@ -457,4 +464,6 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
 
         deleteDBLocation(info.position);
     }
+
+
 }
