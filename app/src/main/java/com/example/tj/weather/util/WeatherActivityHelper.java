@@ -415,14 +415,6 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
         }
     }
 
-    public void openDB() {
-        dbManager.onOpen(dbManager.getWritableDatabase());
-    }
-
-    public void closeDB() {
-        dbModel.close();
-    }
-
     //Deletes all items in the database in response to user pressing the trash icon in the toolbar.
     public void deleteItems() {
         if (dbModel.deleteAll()) {

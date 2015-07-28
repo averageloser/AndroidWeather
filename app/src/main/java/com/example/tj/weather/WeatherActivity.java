@@ -11,6 +11,7 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AlertDialog;
@@ -225,8 +226,6 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
         /*If google api client is not connected, or it not connecting, try to connect.  This will
         happen when the activity is restarted i.e. coming from background to foreground.*/
         connectToGoogleApiServices();
-
-        weatherActivityHelper.openDB();
     }
 
     public void onStop() {
@@ -238,8 +237,6 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
         googleApiClient.disconnect();
 
         locationSupported = false;
-
-        weatherActivityHelper.closeDB();
     }
 
     /**
