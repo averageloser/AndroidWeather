@@ -9,7 +9,7 @@
         android:layout_height="40dp"
         android:gravity="center"
         android:textColor="@android:color/black"
-        android:textSize="20sp"/>
+        android:textSize="10sp"/>
     <TextView
         android:id="@+id/dbStateView"
         android:layout_width="wrap_content"
@@ -17,5 +17,5 @@
         android:paddingLeft="10dip"
         android:gravity="center"
         android:textColor="@android:color/black"
-        android:textSize="20sp"/>
+        android:textSize="10sp"/>
 </LinearLayout>

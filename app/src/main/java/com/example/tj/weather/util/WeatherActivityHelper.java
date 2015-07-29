@@ -36,6 +36,9 @@ import com.example.tj.weather.database.DBModel;
 import com.example.tj.weather.model.ExtendedWeatherForecastAdapter;
 import com.example.tj.weather.model.WeatherForecast;
 import com.example.tj.weather.model.WeatherLocation;
+import com.example.tj.weather.ui.MapLocationView;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +49,7 @@ import java.util.List;
  * This class will handle instantiation and modification of all ui components,
  * as well as weather download callbacks.
  */
-public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Cursor> {
+public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Cursor>, OnMapReadyCallback {
     public static final int DB_LOADER = 1;
 
     private WeatherActivity activity;
@@ -84,7 +87,15 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
     //The list of DBLocations from the database.
     private List<DBLocation> dbLocations = new ArrayList<>();
 
-    View databaseLayout;
+    private View databaseLayout;
+
+    private MapLocationView mapView;
+
+    private boolean mapReady;
+
+    private String currentCity;
+
+    private String currentStateOrCountry;
 
     public WeatherActivityHelper(WeatherActivity activity) {
         this.activity = activity;
@@ -115,7 +126,8 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
         databaseLayout = inflater.inflate(R.layout.database_view_layout, null);
         View currentForecastLayout = inflater.inflate(R.layout.current_forecast_layout, null);
         View extendedForecastLayout = inflater.inflate(R.layout.extended_forecast_layout, null);
-        View extendedForecastHourlyLayout = inflater.inflate(R.layout.extended_forecast_hourly_layout, null);
+        //View extendedForecastHourlyLayout = inflater.inflate(R.layout.extended_forecast_hourly_layout, null);
+        mapView = new MapLocationView(activity, this);
 
         //Textviews for the currentView.
         dateTimeView = (TextView) currentForecastLayout.findViewById(R.id.currentDateTimeView);
@@ -149,6 +161,7 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
         flipper.addView(currentForecastLayout);
         flipper.addView(extendedForecastLayout);
         flipper.addView(databaseLayout);
+        flipper.addView(mapView);
 
         //initialize the loader.
         activity.getSupportLoaderManager().initLoader(DB_LOADER, null, this);
@@ -207,6 +220,11 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
             //Set the city and state in toolbar.
             if (current.getCity() != null && current.getCountryOrState() != null) {
                 toolbar.setTitle((current.getCity() + "," + current.getCountryOrState()).toUpperCase());
+
+                //set the current city and state
+                currentCity = current.getCity();
+
+                currentStateOrCountry = current.getCountryOrState();
             }
 
             //Set the date and the time.
@@ -310,6 +328,11 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
          */
         if (weatherLocation.size() > 2) {
             //Not used here.
+        }
+
+        //update the map, if it is ready.
+        if (mapReady) {
+            mapView.moveMarker(currentCity, currentStateOrCountry);
         }
 
         //finally dismiss the dialog.
@@ -454,5 +477,46 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
         deleteDBLocation(info.position);
     }
 
+    ///////////////////////////Lifecycle methods.////////////////
+    public void onCreate(Bundle state) {
+        mapView.onCreate(state);
+    }
 
+    public void onPause() {
+        mapView.onPause();
+    }
+
+    public void onResume() {
+        mapView.onResume();
+    }
+
+    public void onDestroy() {
+        mapView.onDestroy();
+    }
+
+    public void onLowMemory() {
+        mapView.onLowMemory();
+    }
+
+    public void onSaveInstanceState(Bundle out) {
+        mapView.onSaveInstanceState(out);
+    }
+
+    ///////////////////Called when my Google map is ready for use./////////////////
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        Log.i("map ready?", Thread.currentThread().getName());
+
+        mapView.setGoogleMap(googleMap);
+
+        mapReady = true;
+
+        //if a location is available yet, move to it.
+        mapView.moveMarker(currentCity, currentStateOrCountry);
+    }
+
+    //Navigate back to the first viewflipper child.
+    public void goHome() {
+        flipper.showNext();
+    }
 }

@@ -26,6 +26,7 @@
         android:layout_below="@id/toolbar"
         android:orientation="vertical"
         android:gravity="center"
+
         android:background="@android:color/transparent">
         <!-- ViewPager
             android:id="@+id/viewPager"
@@ -34,6 +35,8 @@
         <ViewFlipper
             android:id="@+id/flipper"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+            android:layout_height="match_parent"
+            android:padding="30dip"
+            />
     </LinearLayout>
 </RelativeLayout>

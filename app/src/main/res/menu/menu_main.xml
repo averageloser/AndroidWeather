@@ -11,7 +11,7 @@
         android:id="@+id/location_search"
         android:title="Location Search"
         android:icon="@drawable/gpsicon"
-        app:showAsAction="always" />
+        app:showAsAction="ifRoom" />
     <item
         android:id="@+id/delete_locations"
         android:title="Clear Saved Locations"

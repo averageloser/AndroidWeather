@@ -11,7 +11,6 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AlertDialog;
@@ -35,6 +34,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.wearable.Wearable;
 
 import java.io.IOException;
@@ -85,6 +85,7 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
         setContentView(R.layout.activity_main);
 
         weatherActivityHelper = new WeatherActivityHelper(this);
+        weatherActivityHelper.onCreate(savedInstanceState);
 
         //Add the Fragments to the Activity.
         createAndManageFragmnts();
@@ -106,8 +107,8 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
                 googleApiClient = new GoogleApiClient.Builder(this)
                         .addConnectionCallbacks(this)
                         .addOnConnectionFailedListener(this)
-                        .addApi(LocationServices.API)
-                        .addApi(Wearable.API)
+                        .addApiIfAvailable(LocationServices.API)
+                        .addApiIfAvailable(Wearable.API)
                         .build();
             }
 
@@ -173,6 +174,9 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
         FragmentManager manager = getSupportFragmentManager();
 
         switch (id) {
+            case R.id.home:
+                weatherActivityHelper.goHome();
+                break;
             case R.id.city_search:
                 if (!citySearchDialog.isVisible() && !citySearchDialog.isAdded()) {
                     citySearchDialog.show(manager, "CitySearchDialog");
@@ -217,6 +221,17 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
         weatherActivityHelper.onWeatherDownloadError();
     }
 
+    public void onPause() {
+        super.onPause();
+
+        weatherActivityHelper.onPause();
+    }
+
+    public void onResume() {
+        super.onResume();
+
+        weatherActivityHelper.onResume();
+    }
     ////////////////////////////Lifecycle methods/////////////////////////////////////
     public void onStart() {
         super.onStart();
@@ -239,6 +254,23 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
         locationSupported = false;
     }
 
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        weatherActivityHelper.onSaveInstanceState(outState);
+    }
+
+    public void onLowMemory() {
+        super.onLowMemory();
+
+        weatherActivityHelper.onLowMemory();
+    }
+
+    public void onDestroy() {
+        super.onDestroy();
+
+        weatherActivityHelper.onDestroy();
+    }
     /**
      * /////////////////callback for a city change.//////////////////
      */
