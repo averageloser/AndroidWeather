@@ -46,7 +46,7 @@ public class NetworkLocationSearchTask implements LocationListener {
         desired.  I need wifi and mobile networks enabled, not gps only.  This is just
         a data object representing the type of location setting.  It is used in conjunction with a
         LocationSettingsRequest object, which is the object representing a complete location setting.*/
-        this.locationTypeRequest =LocationRequest.create();
+        this.locationTypeRequest = LocationRequest.create();
         locationTypeRequest.setPriority(LocationRequest.PRIORITY_LOW_POWER);
 
         listeners = new ArrayList<NetworkLocationChangeListener>();

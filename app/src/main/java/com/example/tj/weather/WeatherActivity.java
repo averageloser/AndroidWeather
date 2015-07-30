@@ -80,6 +80,10 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
 
         setContentView(R.layout.activity_main);
 
+        /*If google api client is not connected, or it not connecting, try to connect.  This will
+        happen when the activity is restarted i.e. coming from background to foreground.*/
+        connectToGoogleApiServices();
+
         weatherActivityHelper = new WeatherActivityHelper(this);
         weatherActivityHelper.onCreate(savedInstanceState);
 
@@ -192,6 +196,7 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
 
+
         weatherActivityHelper.onCreateContextMenu(menu, v, menuInfo);
     }
 
@@ -228,15 +233,16 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
 
         weatherActivityHelper.onResume();
     }
+
     ////////////////////////////Lifecycle methods/////////////////////////////////////
     public void onStart() {
         super.onStart();
 
         registerReceiver(locationSettingsReceiver, new IntentFilter("android.location.MODE_CHANGED"));
 
-        /*If google api client is not connected, or it not connecting, try to connect.  This will
-        happen when the activity is restarted i.e. coming from background to foreground.*/
-        connectToGoogleApiServices();
+        if (googleApiClient != null && !googleApiClient.isConnecting()) {
+            connectToGoogleApiServices();
+        }
     }
 
     public void onStop() {
@@ -303,6 +309,8 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
                     (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE));
             networkLocationSettingsVerifier.addLocationSettingsVerifierListener(this);
         }
+
+        Toast.makeText(this, "google api client connected", Toast.LENGTH_SHORT).show();
     }
 
     @Override
