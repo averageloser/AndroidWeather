@@ -379,8 +379,6 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
                 Address address = addressList.get(0);
 
                 if (address != null) {
-                    Log.i("address city", address.getLocality().toLowerCase() + " " + address.getAdminArea().toLowerCase());
-
                     onCityChanged(address.getLocality().toLowerCase(), address.getAdminArea().toLowerCase());
                 }
             }
