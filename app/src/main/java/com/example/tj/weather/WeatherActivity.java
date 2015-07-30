@@ -60,10 +60,6 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     //The Fragment that does the weather downloading.
     private WeatherDownloadTask weatherDownloader;
 
-    /*Boolean to tell me if proper location services are enabled (wifi and network). Low power use.
-      Toggled as servies are available.*/
-    private boolean locationSupported;
-
     /*handles location changes via google play services FusedLocationAPI.
        This is instantiated in the onconnected listener, as there is no point in creating it at
        all if the current environment doesn't support location services. e.g. location turned off.*/
@@ -107,8 +103,8 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
                 googleApiClient = new GoogleApiClient.Builder(this)
                         .addConnectionCallbacks(this)
                         .addOnConnectionFailedListener(this)
-                        .addApiIfAvailable(LocationServices.API)
-                        .addApiIfAvailable(Wearable.API)
+                        .addApi(LocationServices.API)
+                        .addApi(Wearable.API)
                         .build();
             }
 
@@ -250,8 +246,6 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
 
         //Disconnect from google play services here.
         googleApiClient.disconnect();
-
-        locationSupported = false;
     }
 
     public void onSaveInstanceState(Bundle outState) {
@@ -309,24 +303,17 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
                     (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE));
             networkLocationSettingsVerifier.addLocationSettingsVerifierListener(this);
         }
-
-        //perform the initial location forecast search.
-        networkLocationSettingsVerifier.checkLocationServices();
     }
 
     @Override
     public void onConnectionSuspended(int i) {
         //We lost the connection to play services on the device for whatever reason.
-        locationSupported = false;
-
         Toast.makeText(this, "Location suspended, GoogleApiClient onConnectionSuspended()", Toast.LENGTH_LONG).show();
     }
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
         Toast.makeText(this, "GoogleApiClient onConnectionFailed()", Toast.LENGTH_LONG).show();
-
-        locationSupported = false;
     }
 
     ///////////////////////callbacks for the location settings verifier.////////////////////////
@@ -335,8 +322,6 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
         Log.i("Location settings", "Loc verified");
 
         Toast.makeText(this, "location verified", Toast.LENGTH_SHORT).show();
-
-        locationSupported = true;
 
         //Instantiate the locationservicetask, if it has not already been done.
         if (networkLocationSearchTask == null) {
@@ -350,8 +335,6 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
 
     @Override
     public void onNetworkLocationSettingsNotVerified() {
-        //locationSupported = false;
-
         Toast.makeText(this, "location not verified", Toast.LENGTH_SHORT).show();
 
         Log.i("Location settings", "Loc not verified");
@@ -369,6 +352,8 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     }
 
     private void wearSearchRequest(Intent intent) {
+        Log.i("onNewIntent()", "called");
+
         String location = intent.getStringExtra("message");
 
         if (location != null) {

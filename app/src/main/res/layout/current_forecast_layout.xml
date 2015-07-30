@@ -25,8 +25,7 @@
         android:layout_centerHorizontal="true"
         android:textColor="@android:color/black"
         android:textSize="20sp"
-        android:text="If this doesn't change, location is taking too long. Try a manual search"/>
-
+        android:text="Waiting for you to do a location search..."/>
     <LinearLayout
         android:id="@+id/currentIconDetailsTempView"
         android:layout_width="wrap_content"

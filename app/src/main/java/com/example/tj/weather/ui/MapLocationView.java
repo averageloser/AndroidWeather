@@ -66,7 +66,7 @@ public class MapLocationView extends MapView {
                 location = googleMap.addMarker(new MarkerOptions().position(latLng));
 
                 googleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-                googleMap.animateCamera(CameraUpdateFactory.zoomTo(50000));
+                //googleMap.animateCamera(CameraUpdateFactory.zoomTo(50000));
             }
         }.execute(new String[] {city, statOrCountry});
     }//end moveMarker()

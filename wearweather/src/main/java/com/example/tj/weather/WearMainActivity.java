@@ -2,6 +2,7 @@ package com.example.tj.weather;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.Message;
 import android.speech.RecognizerIntent;
@@ -14,7 +15,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.tj.weather.util.WearMessageTask;
-import com.example.tom.wearweather.R;
+import com.example.tj.weather.R;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -69,8 +70,10 @@ public class WearMainActivity extends Activity implements GoogleApiClient.Connec
     /*This is called when the speech recognizer activity finishes. This is where I send data to the phone. */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+            Log.i("result code", String.valueOf(resultCode));
 
         if (resultCode == RESULT_OK) {
+
             //I have some data.
             final List<String> text = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
 

@@ -1,6 +1,8 @@
 package com.example.tj.weather.util;
 
 import android.os.AsyncTask;
+import android.util.Log;
+import android.widget.Toast;
 
 import com.example.tj.weather.WearMainActivity;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -41,6 +43,7 @@ public class WearMessageTask extends AsyncTask<String, Void, String> {
         NodeApi.GetConnectedNodesResult nodes = Wearable.NodeApi.getConnectedNodes(googleApiClient).await();
         for (Node node : nodes.getNodes()) {
             if (node.isNearby()) {
+                Log.i("wear", node.toString());
                 //Node is in range, so send it the data.
                 Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), "", message.getBytes()).await();
             }
