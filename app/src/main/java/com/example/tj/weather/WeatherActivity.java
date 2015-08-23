@@ -1,6 +1,7 @@
 
 package com.example.tj.weather;
 
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -13,14 +14,17 @@ import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.example.tj.weather.model.WeatherLocation;
@@ -40,6 +44,7 @@ import com.google.android.gms.wearable.Wearable;
 import java.io.IOException;
 import java.util.List;
 
+import static android.support.v4.view.GestureDetectorCompat.*;
 import static com.example.tj.weather.ui.CitySearchDialogFragment.CityChangeListener;
 
 /**
@@ -69,10 +74,10 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     private GoogleApiClient googleApiClient;
 
     //The utlity class that does location settings verification.
-    NetworkLocationSettingsVerifier networkLocationSettingsVerifier;
+    private NetworkLocationSettingsVerifier networkLocationSettingsVerifier;
 
     //The Broadcast receiver that notifies of a change in location settings.
-    LocationSettingsReceiver locationSettingsReceiver = new LocationSettingsReceiver();
+    private LocationSettingsReceiver locationSettingsReceiver = new LocationSettingsReceiver();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,11 +101,23 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
         //Check to see if Google Play Services is installed.
         GoogleApiAvailability availability = GoogleApiAvailability.getInstance();
 
+        /*This does not seem to be working properly.  It always returns SUCCESS, even on emulators
+        and devices without play services installed.   An alternative method for checking if play
+        services is available is via the Packagemanager.   Fix this some day.
+         */
         int result = availability.isGooglePlayServicesAvailable(this);
+
+        Log.i("play services", String.valueOf(result));
 
         //if google play services is not installed, this should prompt user to download it.
         if (result != ConnectionResult.SUCCESS) {
-            availability.getErrorDialog(this, result, 0).show();
+            //Dialog dialog = availability.getErrorDialog(this, result, 0);
+            //dialog.show();
+
+            new AlertDialog.Builder(this)
+                    .setTitle("Error with Play Services")
+                    .setMessage("Location Features in this app require Google Play Services \n" +
+                            "it is either not installed, or needs to be updated.").show();
         } else {
             //instantiate googleApiClient for play location services, if we haven't already.
             if (googleApiClient == null) {
@@ -133,15 +150,6 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
         //add both Fragments to the Activity.
         trans.add(weatherDownloader, "weatherDownloader");
         trans.commit();
-    }
-
-
-    /*Handles touch for the view flipper.  See WeatherActivityHelper for details.*/
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        weatherActivityHelper.onTouchEvent(event);
-
-        return super.onTouchEvent(event);
     }
 
     @Override
@@ -183,7 +191,13 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
                 }
                 break;
             case R.id.location_search:
-                networkLocationSettingsVerifier.checkLocationServices();
+                if (googleApiClient != null && googleApiClient.isConnected()) {
+                    networkLocationSettingsVerifier.checkLocationServices();
+                } else {
+                    new AlertDialog.Builder(this).setTitle("Location error")
+                            .setMessage("Problem with Google Play Services. \n" +
+                                    "Check your installation").show();
+                }
                 break;
             case R.id.delete_locations:
                 weatherActivityHelper.deleteItems();
@@ -195,7 +209,6 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
-
 
         weatherActivityHelper.onCreateContextMenu(menu, v, menuInfo);
     }
@@ -271,6 +284,7 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
 
         weatherActivityHelper.onDestroy();
     }
+
     /**
      * /////////////////callback for a city change.//////////////////
      */

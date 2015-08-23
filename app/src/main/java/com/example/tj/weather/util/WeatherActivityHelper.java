@@ -13,14 +13,17 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -97,6 +100,8 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
 
     private String currentStateOrCountry;
 
+    private Button nextButton; //for convenience, this button will flip through views in the viewflipper.
+
     public WeatherActivityHelper(WeatherActivity activity) {
         this.activity = activity;
 
@@ -163,39 +168,15 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
         flipper.addView(databaseLayout);
         flipper.addView(mapView);
 
+        nextButton = (Button) activity.findViewById(R.id.nextButton);
+        nextButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                flipper.showNext();
+            }
+        });
+
         //initialize the loader.
         activity.getSupportLoaderManager().initLoader(DB_LOADER, null, this);
-    }
-
-    /*Handles touch for the view flipper.   For simplicity, I choose to use the fade in and out
-   animation.  I could have used a translate animation from left to right or vice versa, depending
-   on whether or not the user swiped right or left.
-
-   Move this into helper class to reduce clutter.
-    */
-    public void onTouchEvent(MotionEvent event) {
-        float firstX = 0;
-        float lastX = 0;
-        float minimumDistance = 50; //User must move a min of 100px to register a swipe.
-
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                firstX = event.getX();
-                break;
-            case MotionEvent.ACTION_UP:
-                lastX = event.getX();
-                break;
-        }
-
-        //Check if swiped right.
-        if (lastX > (firstX) + (minimumDistance)) { //Right swipe.
-            flipper.showNext();
-        }
-
-        //Check if swiped left.
-        if (lastX < (firstX) - (minimumDistance)) { //Left swipe.
-            flipper.showPrevious();
-        }
     }
 
     /* Callback for the AsyncTask that downloads weather data.
@@ -382,7 +363,7 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
 
         dbLocations.clear();
 
-        while(data.moveToNext()) {
+        while (data.moveToNext()) {
             DBLocation location = new DBLocation();
             location.setCity(data.getString(1));
             location.setStateOrCountry(data.getString(2));

@@ -39,4 +39,12 @@
             android:padding="30dip"
             />
     </LinearLayout>
+
+    <Button
+        android:id="@+id/nextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:text="Next -->"/>
 </RelativeLayout>
