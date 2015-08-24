@@ -264,7 +264,9 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
         unregisterReceiver(locationSettingsReceiver);
 
         //Disconnect from google play services here.
-        googleApiClient.disconnect();
+        if (googleApiClient != null && googleApiClient.isConnected()) {
+            googleApiClient.disconnect();
+        }
     }
 
     public void onSaveInstanceState(Bundle outState) {
