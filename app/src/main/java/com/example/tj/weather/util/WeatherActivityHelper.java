@@ -318,6 +318,8 @@ public class WeatherActivityHelper implements LoaderManager.LoaderCallbacks<Curs
 
         //finally dismiss the dialog.
         progressDialog.dismiss();
+
+        flipper.setDisplayedChild(0);
     } //End OnWeatherDownloadComplete().
 
     //show a dialog explaining an error occurred.

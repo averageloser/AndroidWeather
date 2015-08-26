@@ -2,9 +2,7 @@ package com.example.tj.weather.util;
 
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.support.v4.net.ConnectivityManagerCompat;
 import android.util.Log;
-import android.widget.Switch;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
@@ -42,7 +40,7 @@ public class NetworkLocationSettingsVerifier {
 
     /*The type of location request I want i.e. a low power search (network and wifi).  Used to check
     location status and also used by NetworkLocationSearchTask. */
-    private LocationRequest locationLowPoweRequest;
+    private LocationRequest locationBalancedRequest;
 
     public NetworkLocationSettingsVerifier(GoogleApiClient googleApiClient, ConnectivityManager cm) {
         this.googleApiClient = googleApiClient;
@@ -56,8 +54,8 @@ public class NetworkLocationSettingsVerifier {
         a data object representing the type of location setting.  It is used in conjunction with a
         LocationSettingsRequest object, which is the object representing a complete location setting.
          */
-        locationLowPoweRequest = LocationRequest.create();
-        locationLowPoweRequest.setPriority(LocationRequest.PRIORITY_LOW_POWER);
+        locationBalancedRequest = LocationRequest.create();
+        locationBalancedRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
     }
 
     public void addLocationSettingsVerifierListener(LocationSettingsVerifierListener listener) {
@@ -79,7 +77,7 @@ public class NetworkLocationSettingsVerifier {
     public void checkLocationServices() {
         //This is the object that holds the request for the use of low power location functionality.
         LocationSettingsRequest locationSettingsRequest = new LocationSettingsRequest.Builder()
-                .addLocationRequest(locationLowPoweRequest)
+                .addLocationRequest(locationBalancedRequest)
                 .build();
 
         /*Now I call checlLocationSettings() in the SettingsAPI, which returns a pending result of type
@@ -90,7 +88,7 @@ public class NetworkLocationSettingsVerifier {
         result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
             @Override
             public void onResult(LocationSettingsResult result) {
-                if (isDataNetworkActive() && result.getLocationSettingsStates().isNetworkLocationPresent()) {
+                if (isDataNetworkActive() && result.getLocationSettingsStates().isNetworkLocationUsable()) {
                     notifyListenersLocationServicesVerified();
                 } else {
                     ///Location setting are inadequate.  Notify Listeners.

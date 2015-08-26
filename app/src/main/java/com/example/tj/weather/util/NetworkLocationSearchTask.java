@@ -47,7 +47,7 @@ public class NetworkLocationSearchTask implements LocationListener {
         a data object representing the type of location setting.  It is used in conjunction with a
         LocationSettingsRequest object, which is the object representing a complete location setting.*/
         this.locationTypeRequest = LocationRequest.create();
-        locationTypeRequest.setPriority(LocationRequest.PRIORITY_LOW_POWER);
+        locationTypeRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 
         listeners = new ArrayList<NetworkLocationChangeListener>();
     }
