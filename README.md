@@ -1,7 +1,7 @@
 # AndroidWeather
 TJF Weather for Android
 
-Android Weather application that parses the OpenWeatherMap REST API to provide world-wide weather data.   
+Android Weather application that parses JSON from the OpenWeatherMap REST API to provide world-wide weather data.   
 
 Featuring:
 
