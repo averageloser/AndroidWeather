@@ -294,12 +294,26 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     @Override
     public void onCityChanged(String city, String stateOrCountry) {
 
-        weatherActivityHelper.showDialog();
+        //It seems as if locaiton services on some devices return null, which is strange.
+        if (city != null && stateOrCountry != null) {
+            weatherActivityHelper.showDialog();
 
-        weatherDownloader.beginDownloading(city, stateOrCountry);
+            weatherDownloader.beginDownloading(city, stateOrCountry);
 
-        //add this location to the database.
-        weatherActivityHelper.insertDBLocation(city.toUpperCase(), stateOrCountry.toUpperCase());
+
+            //add this location to the database.
+            weatherActivityHelper.insertDBLocation(city.toUpperCase(), stateOrCountry.toUpperCase());
+        } else {
+            new AlertDialog.Builder(this)
+                    .setTitle("Location problem")
+                    .setMessage("Geocoder has returned something in your location as NULL, either city, state, or both." +
+                            "\n\n"
+                            + "city: " + String.valueOf(city)
+                            + "\n"
+                            + "state: " + String.valueOf(stateOrCountry)
+                            + "\n You location cannot be determined with enough precision.")
+                    .show();
+        }
     }
 
     //////////////Callback for the location change listener.//////////////

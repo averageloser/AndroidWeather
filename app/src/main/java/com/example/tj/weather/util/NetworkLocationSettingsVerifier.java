@@ -55,7 +55,7 @@ public class NetworkLocationSettingsVerifier {
         LocationSettingsRequest object, which is the object representing a complete location setting.
          */
         locationBalancedRequest = LocationRequest.create();
-        locationBalancedRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+        locationBalancedRequest.setPriority(LocationRequest.PRIORITY_LOW_POWER);
     }
 
     public void addLocationSettingsVerifierListener(LocationSettingsVerifierListener listener) {
