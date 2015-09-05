@@ -83,7 +83,7 @@ public class NetworkLocationSearchTask implements LocationListener {
 
                 Log.i("LAT & LNG", String.valueOf(address.getLatitude() + " " + address.getLongitude()));
 
-                city = address.getSubLocality();
+                city = address.getLocality();
 
                 state = address.getAdminArea();
 

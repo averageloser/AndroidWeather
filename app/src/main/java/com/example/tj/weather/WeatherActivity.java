@@ -300,13 +300,12 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
 
             weatherDownloader.beginDownloading(city, stateOrCountry);
 
-
             //add this location to the database.
             weatherActivityHelper.insertDBLocation(city.toUpperCase(), stateOrCountry.toUpperCase());
         } else {
             new AlertDialog.Builder(this)
                     .setTitle("Location problem")
-                    .setMessage("Geocoder has returned something in your location as NULL, either city, state, or both." +
+                    .setMessage("Something in your location search is NULL, either city, state, or both." +
                             "\n\n"
                             + "city: " + String.valueOf(city)
                             + "\n"
