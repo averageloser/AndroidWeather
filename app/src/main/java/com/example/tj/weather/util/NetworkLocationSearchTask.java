@@ -71,9 +71,9 @@ public class NetworkLocationSearchTask implements LocationListener {
 
         if (location != null) {
 
-            boolean stillWorking = true;
+            int count = 0;
 
-            while (stillWorking) {
+            while (count < 10) {
 
                 try {
                     possibleAddresses = gc.getFromLocation(location.getLatitude(),
@@ -95,31 +95,26 @@ public class NetworkLocationSearchTask implements LocationListener {
                     Log.i("city and state", city + " " + state);
 
                     if (city == null || state == null) {
-                        stillWorking = true;
+                        count++;
                     } else {
-                        stillWorking = false;
+                        count = 10;
                     }
                 }//end while.
 
                 String[] data = new String[2];
+
                 data[0] = city;
                 data[1] = state;
 
                 //Notify listeners of the new data.
-                if (city != null || state != null) {
-
-                    for (NetworkLocationChangeListener l : listeners) {
-                        l.onNetworkLocationChange(data);
-                    }
+                for (NetworkLocationChangeListener l : listeners) {
+                    l.onNetworkLocationChange(data);
                 }
-            }
-        } else {
-            //the location was null for some reason beyond my control.
-            Log.e("Location Search Task", "Location is null");
-        }
 
-        //I don't want multiple location updates, so unregister the updatelistener.
-        LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
+                //I don't want multiple location updates, so unregister the updatelistener.
+                LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
+            }
+        }
     }
 
     //Here is where I request that location updates be sent.  I will only do a one time update.
