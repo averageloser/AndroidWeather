@@ -73,9 +73,11 @@ public class NetworkLocationSearchTask implements LocationListener {
 
             int count = 0;
 
-            while (count < 10) {
+            while (count < 5) {
 
                 try {
+                    Log.i("Geocoder", String.valueOf(Geocoder.isPresent()));
+
                     possibleAddresses = gc.getFromLocation(location.getLatitude(),
                             location.getLongitude(), 1);
                 } catch (IOException e) {
@@ -97,7 +99,7 @@ public class NetworkLocationSearchTask implements LocationListener {
                     if (city == null || state == null) {
                         count++;
                     } else {
-                        count = 10;
+                        count = 5;
                     }
                 }//end while.
             }
