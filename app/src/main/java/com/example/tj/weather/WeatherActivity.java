@@ -79,6 +79,8 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     //The Broadcast receiver that notifies of a change in location settings.
     private LocationSettingsReceiver locationSettingsReceiver = new LocationSettingsReceiver();
 
+    private boolean locationSearching; //Am I currently searching for a location?
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -191,7 +193,8 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
                 }
                 break;
             case R.id.location_search:
-                if (googleApiClient != null && googleApiClient.isConnected()) {
+                if (googleApiClient != null && googleApiClient.isConnected()  && !locationSearching) {
+                    locationSearching = true;
                     networkLocationSettingsVerifier.checkLocationServices();
                 } else {
                     new AlertDialog.Builder(this).setTitle("Location error")
@@ -324,6 +327,8 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
          */
 
         Log.i("Thread", Thread.currentThread().getName());
+
+        locationSearching = false;
 
         onCityChanged(location[0], location[1]);
     }

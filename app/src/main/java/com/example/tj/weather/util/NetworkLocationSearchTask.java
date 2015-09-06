@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * Created by tom on 6/8/2015.
  * License: Public Domain.
- *
+ * <p/>
  * This class will acquire the users current location, then pass a city and state or country
  * to its listeners.
  */
@@ -70,24 +70,36 @@ public class NetworkLocationSearchTask implements LocationListener {
         String state = null;
 
         if (location != null) {
-            try {
-                possibleAddresses = gc.getFromLocation(location.getLatitude(),
-                        location.getLongitude(), 1);
-            } catch (IOException e) {
-                Log.e("Geocoder error", e.getMessage());
-            }
+
+            boolean stillWorking = true;
+
+            while (stillWorking) {
+
+                try {
+                    possibleAddresses = gc.getFromLocation(location.getLatitude(),
+                            location.getLongitude(), 1);
+                } catch (IOException e) {
+                    Log.e("Geocoder error", e.getMessage());
+                }
 
                     /* if we got a list of addresses, try to get city and state from it.*/
-            if (possibleAddresses != null) {
-                Address address = possibleAddresses.get(0);
+                if (possibleAddresses != null) {
+                    Address address = possibleAddresses.get(0);
 
-                Log.i("LAT & LNG", String.valueOf(address.getLatitude() + " " + address.getLongitude()));
+                    Log.i("LAT & LNG", String.valueOf(address.getLatitude() + " " + address.getLongitude()));
 
-                city = address.getLocality();
+                    city = address.getLocality();
 
-                state = address.getAdminArea();
+                    state = address.getAdminArea();
 
-                Log.i("city and state", city + " " + state);
+                    Log.i("city and state", city + " " + state);
+
+                    if (city == null || state == null) {
+                        stillWorking = true;
+                    } else {
+                        stillWorking = false;
+                    }
+                }//end while.
 
                 String[] data = new String[2];
                 data[0] = city;
