@@ -100,20 +100,20 @@ public class NetworkLocationSearchTask implements LocationListener {
                         count = 10;
                     }
                 }//end while.
-
-                String[] data = new String[2];
-
-                data[0] = city;
-                data[1] = state;
-
-                //Notify listeners of the new data.
-                for (NetworkLocationChangeListener l : listeners) {
-                    l.onNetworkLocationChange(data);
-                }
-
-                //I don't want multiple location updates, so unregister the updatelistener.
-                LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
             }
+
+            String[] data = new String[2];
+
+            data[0] = city;
+            data[1] = state;
+
+            //Notify listeners of the new data.
+            for (NetworkLocationChangeListener l : listeners) {
+                l.onNetworkLocationChange(data);
+            }
+
+            //I don't want multiple location updates, so unregister the updatelistener.
+            LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
         }
     }
 
