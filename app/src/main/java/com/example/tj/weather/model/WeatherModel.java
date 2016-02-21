@@ -28,6 +28,8 @@ public class WeatherModel {
     private WeatherModelHelper weatherModelHelper = new WeatherModelHelper(); /* Common utility methods the model
     uses so as to not clutter itself with code that could best be put somewhere else. */
 
+    private final static String API_KEY = "dfc977b030e99d11937349a32db3f4fa";
+
     /* Used for presenting temp data in the UI. Not implemented.*/
     public String getDegreeSymbol() {
         return degreeSymbol;
@@ -69,8 +71,18 @@ public class WeatherModel {
 
         this.countryOrState = countryOrState;
 
-        String url = "http://api.openweathermap.org/data/2.5/weather?q="+ URLEncoder.encode(city, "UTF-8")
-                +","+URLEncoder.encode(countryOrState, "UTF-8")+"&units="+ URLEncoder.encode(unit, "UTF-8");
+        String url = "http://api.openweathermap.org/data/2.5/weather?q="
+                + URLEncoder.encode(city, "UTF-8")
+                +","
+                +URLEncoder.encode(countryOrState, "UTF-8")
+                +"&units="
+                + URLEncoder.encode(unit, "UTF-8")
+                + "&APPID=" + API_KEY;
+
+        /*
+        String url = "http://api.openweathermap.org/data/2.5/weather?q=" + city + "," + countryOrState +
+                "&units=" + unit + "&APPID=" + API_KEY;
+        */
 
         return parseJSONDataCurrentForecast(weatherModelHelper.downloadJSONData(url));
     }
@@ -88,8 +100,17 @@ public class WeatherModel {
     public WeatherLocation getWeeklyForecastNoHourly(String city, String countryOrState) throws IOException,
             JSONException {
 
-        String url = "http://api.openweathermap.org/data/2.5/forecast/daily?q="+URLEncoder.encode(city, "UTF-8")+
-                ","+URLEncoder.encode(countryOrState, "UTF-8")+"&mode=json"+"&units="+URLEncoder.encode(unit, "UTF-8")+"&cnt=7";
+        String url = "http://api.openweathermap.org/data/2.5/forecast/daily?q="
+                +URLEncoder.encode(city, "UTF-8")
+                +","
+                +URLEncoder.encode(countryOrState, "UTF-8")+"&mode=json"
+                +"&units="+URLEncoder.encode(unit, "UTF-8")+"&cnt=7"
+                + "&APPID=" + API_KEY;
+
+        /*
+        String url = "http://api.openweathermap.org/data/2.5/forecast/daily?q=" + city + "," + countryOrState +
+                "&mode=json" + "&units=" + unit + "&cnt=7" + "&APPID=" + API_KEY;
+        */
 
         cityName = city;
 
