@@ -1,12 +1,16 @@
 package com.example.tj.weather.util;
 
+import android.app.Activity;
+import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
 
+import com.example.tj.weather.WeatherActivity;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
@@ -24,7 +28,7 @@ import java.util.List;
  * <p/>
  * <p/>
  */
-public class NetworkLocationSettingsVerifier {
+public class NetworkLocationSettingsVerifier implements ResultCallback<LocationSettingsResult> {
     private ConnectivityManager cm;
 
     public interface LocationSettingsVerifierListener {
@@ -34,6 +38,8 @@ public class NetworkLocationSettingsVerifier {
         void onNetworkLocationSettingsNotVerified();
     }
 
+    private Activity activity;
+
     private GoogleApiClient googleApiClient;
 
     private List<LocationSettingsVerifierListener> listeners;
@@ -42,7 +48,9 @@ public class NetworkLocationSettingsVerifier {
     location status and also used by NetworkLocationSearchTask. */
     private LocationRequest locationBalancedRequest;
 
-    public NetworkLocationSettingsVerifier(GoogleApiClient googleApiClient, ConnectivityManager cm) {
+    public NetworkLocationSettingsVerifier(Activity activity, GoogleApiClient googleApiClient, ConnectivityManager cm) {
+        this.activity = activity;
+
         this.googleApiClient = googleApiClient;
 
         this.cm = cm;
@@ -85,17 +93,23 @@ public class NetworkLocationSettingsVerifier {
         PendingResult<LocationSettingsResult> result
                 = LocationServices.SettingsApi.checkLocationSettings(googleApiClient, locationSettingsRequest);
 
-        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
-            @Override
-            public void onResult(LocationSettingsResult result) {
-                if (isDataNetworkActive() && result.getLocationSettingsStates().isNetworkLocationUsable()) {
-                    notifyListenersLocationServicesVerified();
-                } else {
-                    ///Location setting are inadequate.  Notify Listeners.
-                    notifyListenersLocationServicesNotVerified();
-                }
-            }
-        });
+        result.setResultCallback(this);
+    }
+
+    @Override
+    public void onResult(LocationSettingsResult result) {
+        final Status locationStatus = result.getStatus();
+
+        if (locationStatus.isSuccess() && isDataNetworkActive()) {
+            notifyListenersLocationServicesVerified();
+        } else {
+            /*Here is an opportunity to offer the user a dialog to change their location settings.
+            with startResolutionForResult(Activity act, int statusCode), to which will call back to
+            the Activity's onActivityResult().
+            */
+            notifyListenersLocationServicesNotVerified();
+        }
+
     }
 
     private boolean isDataNetworkActive() {

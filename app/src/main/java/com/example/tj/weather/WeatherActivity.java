@@ -107,7 +107,7 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
         and devices without play services installed.   An alternative method for checking if play
         services is available is via the Packagemanager.   Fix this some day.
          */
-        int result = availability.isGooglePlayServicesAvailable(this);
+        int result = availability.isGooglePlayServicesAvailable(getApplicationContext());
 
         Log.i("play services", String.valueOf(result));
 
@@ -339,7 +339,7 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     public void onConnected(Bundle bundle) {
         //Here is where I check to make sure that location is set.
         if (networkLocationSettingsVerifier == null) {
-            networkLocationSettingsVerifier = new NetworkLocationSettingsVerifier(googleApiClient,
+            networkLocationSettingsVerifier = new NetworkLocationSettingsVerifier(this, googleApiClient,
                     (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE));
             networkLocationSettingsVerifier.addLocationSettingsVerifierListener(this);
         }
