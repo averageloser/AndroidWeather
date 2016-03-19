@@ -237,11 +237,24 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     public void onPause() {
         super.onPause();
 
+        unregisterReceiver(locationSettingsReceiver);
+
+        //Disconnect from google play services here.
+        if (googleApiClient != null && googleApiClient.isConnected()) {
+            googleApiClient.disconnect();
+        }
+
         weatherActivityHelper.onPause();
     }
 
     public void onResume() {
         super.onResume();
+
+        registerReceiver(locationSettingsReceiver, new IntentFilter("android.location.MODE_CHANGED"));
+
+        if (googleApiClient != null && !googleApiClient.isConnecting()) {
+            connectToGoogleApiServices();
+        }
 
         weatherActivityHelper.onResume();
     }
@@ -249,23 +262,10 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     ////////////////////////////Lifecycle methods/////////////////////////////////////
     public void onStart() {
         super.onStart();
-
-        registerReceiver(locationSettingsReceiver, new IntentFilter("android.location.MODE_CHANGED"));
-
-        if (googleApiClient != null && !googleApiClient.isConnecting()) {
-            connectToGoogleApiServices();
-        }
     }
 
     public void onStop() {
         super.onStop();
-
-        unregisterReceiver(locationSettingsReceiver);
-
-        //Disconnect from google play services here.
-        if (googleApiClient != null && googleApiClient.isConnected()) {
-            googleApiClient.disconnect();
-        }
     }
 
     public void onSaveInstanceState(Bundle outState) {
