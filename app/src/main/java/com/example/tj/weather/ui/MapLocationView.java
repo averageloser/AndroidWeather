@@ -4,14 +4,11 @@ import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.AsyncTask;
-import android.util.AttributeSet;
-import android.widget.Toast;
 
 import com.example.tj.weather.util.WeatherActivityHelper;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
-import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -22,12 +19,15 @@ import java.io.IOException;
  * Created by tj on 7/29/2015.
  */
 public class MapLocationView extends MapView {
+    private Context context;
     private WeatherActivityHelper weatherActivityHelper;
     private GoogleMap googleMap;
     private Marker location;
 
     public MapLocationView(Context context, WeatherActivityHelper weatherActivityHelper) {
         super(context);
+
+        this.context = context;
 
         this.weatherActivityHelper = weatherActivityHelper;
 
@@ -49,7 +49,7 @@ public class MapLocationView extends MapView {
                 Address addr = null;
                 LatLng temp = null;
 
-                Geocoder gc = new Geocoder(MapLocationView.this.getContext());
+                Geocoder gc = new Geocoder(context);
                 try {
                     addr = gc.getFromLocationName(city + ", " + stateOrCountry, 1).get(0);
 

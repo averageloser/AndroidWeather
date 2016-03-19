@@ -149,7 +149,6 @@ public class WeatherModel {
     private WeatherLocation parseJSONDataCurrentForecast(String data) throws JSONException {
         /*
         sunrise, sunset, date, time, description, icon, temp, temp_max, temp_min, humidity, wind speed.
-
          */
         WeatherLocation location = new WeatherLocation();
         location.setType("current"); // the type of forecast data this location holds.

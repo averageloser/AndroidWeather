@@ -1,7 +1,6 @@
 
 package com.example.tj.weather;
 
-import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -14,17 +13,13 @@ import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.ContextMenu;
-import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Button;
 import android.widget.Toast;
 
 import com.example.tj.weather.model.WeatherLocation;
@@ -38,13 +33,11 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.wearable.Wearable;
 
 import java.io.IOException;
 import java.util.List;
 
-import static android.support.v4.view.GestureDetectorCompat.*;
 import static com.example.tj.weather.ui.CitySearchDialogFragment.CityChangeListener;
 
 /**
@@ -88,7 +81,10 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
         setContentView(R.layout.activity_main);
 
         /*If google api client is not connected, or it not connecting, try to connect.  This will
-        happen when the activity is restarted i.e. coming from background to foreground.*/
+        happen when the activity is restarted i.e. coming from background to foreground.
+
+        THIS CAN BE DONE IN ONRESUME, INSTEAD.
+        */
         connectToGoogleApiServices();
 
         weatherActivityHelper = new WeatherActivityHelper(this);
@@ -127,7 +123,7 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
                         .addConnectionCallbacks(this)
                         .addOnConnectionFailedListener(this)
                         .addApi(LocationServices.API)
-                        .addApi(Wearable.API)
+                        .addApiIfAvailable(Wearable.API)
                         .build();
             }
 
@@ -285,6 +281,7 @@ public class WeatherActivity extends AppCompatActivity implements CityChangeList
     }
 
     public void onDestroy() {
+
         super.onDestroy();
 
         weatherActivityHelper.onDestroy();
